@@ -16,6 +16,8 @@
             --border-glass: rgba(255, 255, 255, 0.12);
             --accent: #38bdf8;
             --accent-glow: rgba(56, 189, 248, 0.4);
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.4);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
         }
@@ -42,6 +44,7 @@
             background-color: #0b0f19 !important;
         }
 
+        /* Painel Superior */
         .cyber-panel {
             position: absolute;
             top: 20px;
@@ -60,6 +63,13 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .cyber-panel.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, -30px);
         }
 
         .search-container {
@@ -189,6 +199,33 @@
             transform: scale(0.97);
         }
 
+        /* Botão Vermelho: Sair da Navegação (Canto Superior Direito) */
+        #btn-exit-navigation {
+            display: none;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--danger);
+            border-radius: 12px;
+            color: var(--danger);
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 10px 16px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), 0 0 15px var(--danger-glow);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            align-items: center;
+            gap: 6px;
+        }
+
+        #btn-exit-navigation:hover {
+            transform: scale(1.05);
+            background: rgba(239, 68, 68, 0.15);
+        }
+
         #btn-recenter {
             display: none;
             position: absolute;
@@ -223,7 +260,7 @@
 </head>
 <body>
 
-    <div class="cyber-panel">
+    <div class="cyber-panel" id="main-panel">
         <div class="search-container">
             <input type="text" id="search-input" placeholder="Buscar destino (salvo offline)..." autocomplete="off">
             <div id="search-results"></div>
@@ -247,6 +284,9 @@
         </div>
     </div>
 
+    <!-- Botão Sair da Navegação (Canto Superior Direito) -->
+    <button id="btn-exit-navigation" title="Sair da Navegação">🛑 Sair da Navegação</button>
+
     <button id="btn-recenter" title="Voltar à sua localização">📍</button>
 
     <div id="map"></div>
@@ -255,7 +295,7 @@
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
 
     <script>
-        const DB_KEY = 'neomap_offline_places_v6';
+        const DB_KEY = 'neomap_offline_places_v7';
         
         function getSavedPlaces() {
             try {
@@ -309,7 +349,9 @@
         let routeActive = false;
         let currentTransport = 'foot';
 
+        const mainPanel = document.getElementById('main-panel');
         const btnRecenter = document.getElementById('btn-recenter');
+        const btnExitNavigation = document.getElementById('btn-exit-navigation');
         const searchInput = document.getElementById('search-input');
         const searchResults = document.getElementById('search-results');
         const routeInfoPanel = document.getElementById('route-info-panel');
@@ -418,7 +460,6 @@
                             searchInput.value = place.display_name;
                             searchResults.style.display = 'none';
                             
-                            // Reseta qualquer rota anterior
                             routeActive = false;
                             rawRouteCoords = null;
                             if (routePolyline) {
@@ -426,7 +467,6 @@
                                 routePolyline = null;
                             }
 
-                            // Adiciona ou atualiza o marcador de destino no mapa
                             if (destinationMarker) {
                                 destinationMarker.setLatLng(destinationCoords);
                             } else {
@@ -436,11 +476,9 @@
                             following = false;
                             btnRecenter.style.display = 'flex';
                             
-                            // Aplica EXATAMENTE o mesmo nível de zoom atual do usuário (map.getZoom() ou 19 como fallback)
                             const targetZoom = (userCoords && map.getZoom() > 2) ? map.getZoom() : 19;
                             map.setView(destinationCoords, targetZoom, { animate: true });
 
-                            // Calcula apenas as informações de distância e tempo e exibe o botão "Iniciar Rota"
                             calculateRouteInfo();
                         };
                         searchResults.appendChild(div);
@@ -498,8 +536,6 @@
 
                     distVal.textContent = distanceKm.toFixed(1) + ' km';
                     timeVal.textContent = calculatedMinutes + ' min';
-                    
-                    // Força a exibição explícita do painel contendo o botão "Iniciar Rota"
                     routeInfoPanel.style.display = 'flex';
                 }
             } catch (err) {
@@ -507,17 +543,49 @@
             }
         }
 
-        // Apenas desenha a rota quando o botão "Iniciar Rota" for clicado explicitamente
+        // Iniciar Rota: Oculta o painel principal e mostra o botão vermelho no canto superior direito
         btnStartRoute.onclick = () => {
             if (!userCoords || !destinationCoords) return;
 
             routeActive = true;
             following = true;
             btnRecenter.style.display = 'none';
-            routeInfoPanel.style.display = 'flex'; // Mantém o painel visível com distância/tempo
+            
+            // Esconde o painel principal
+            mainPanel.classList.add('hidden');
+            // Exibe o botão vermelho de saída
+            btnExitNavigation.style.display = 'flex';
 
             map.setView(userCoords, map.getZoom(), { animate: true });
             fetchRouteGeometry(true);
+        };
+
+        // Sair da Navegação: Restaura o painel principal e oculta a rota e o marcador de destino
+        btnExitNavigation.onclick = () => {
+            routeActive = false;
+            rawRouteCoords = null;
+            destinationCoords = null;
+
+            if (routePolyline) {
+                map.removeLayer(routePolyline);
+                routePolyline = null;
+            }
+
+            if (destinationMarker) {
+                map.removeLayer(destinationMarker);
+                destinationMarker = null;
+            }
+
+            // Oculta o botão vermelho e mostra novamente o painel principal
+            btnExitNavigation.style.display = 'none';
+            mainPanel.classList.remove('hidden');
+            routeInfoPanel.style.display = 'none';
+            searchInput.value = '';
+
+            if (userCoords) {
+                following = true;
+                map.setView(userCoords, map.getZoom(), { animate: true });
+            }
         };
 
         async function fetchRouteGeometry(updateInfo = false) {
@@ -552,7 +620,6 @@
 
                         distVal.textContent = distanceKm.toFixed(1) + ' km';
                         timeVal.textContent = calculatedMinutes + ' min';
-                        routeInfoPanel.style.display = 'flex';
                     }
                 }
             } catch (err) {

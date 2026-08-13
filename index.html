@@ -20,6 +20,19 @@
             --danger-glow: rgba(239, 68, 68, 0.4);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
+            --map-bg: #0b0f19;
+            --tile-filter: dark_all;
+        }
+
+        body.light-mode {
+            --bg-glass: rgba(255, 255, 255, 0.85);
+            --border-glass: rgba(0, 0, 0, 0.12);
+            --accent: #0284c7;
+            --accent-glow: rgba(2, 132, 199, 0.3);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --map-bg: #f8fafc;
+            --tile-filter: light_all;
         }
 
         * {
@@ -33,7 +46,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #0b0f19;
+            background-color: var(--map-bg);
             color: var(--text-main);
         }
 
@@ -41,7 +54,7 @@
             width: 100%;
             height: 100vh;
             z-index: 1;
-            background-color: #0b0f19 !important;
+            background-color: var(--map-bg) !important;
         }
 
         /* Painel Superior */
@@ -59,17 +72,17 @@
             border: 1px solid var(--border-glass);
             border-radius: 16px;
             padding: 14px 18px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px var(--accent-glow);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 20px var(--accent-glow);
             display: flex;
             flex-direction: column;
             gap: 12px;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease, opacity 0.3s ease;
         }
 
         .cyber-panel.hidden {
             opacity: 0;
             pointer-events: none;
-            transform: translate(-50%, -30px);
+            transform: translate(-50%, -40px);
         }
 
         .search-container {
@@ -79,7 +92,7 @@
 
         .search-container input {
             width: 100%;
-            background: rgba(2, 6, 23, 0.6);
+            background: var(--bg-glass);
             border: 1px solid var(--border-glass);
             border-radius: 10px;
             padding: 12px 16px;
@@ -99,7 +112,7 @@
             top: calc(100% + 8px);
             left: 0;
             width: 100%;
-            background: rgba(15, 23, 42, 0.95);
+            background: var(--bg-glass);
             backdrop-filter: blur(12px);
             border: 1px solid var(--border-glass);
             border-radius: 10px;
@@ -114,12 +127,12 @@
             font-size: 0.85rem;
             color: var(--text-muted);
             cursor: pointer;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid var(--border-glass);
             transition: background 0.2s;
         }
 
         .result-item:hover {
-            background: rgba(56, 189, 248, 0.1);
+            background: var(--accent-glow);
             color: var(--text-main);
         }
 
@@ -132,7 +145,7 @@
 
         .transport-selector {
             display: flex;
-            background: rgba(2, 6, 23, 0.6);
+            background: var(--bg-glass);
             border: 1px solid var(--border-glass);
             border-radius: 10px;
             padding: 4px;
@@ -159,7 +172,7 @@
 
         #route-info-panel {
             display: none;
-            background: rgba(2, 6, 23, 0.85);
+            background: var(--bg-glass);
             border: 1px solid var(--border-glass);
             border-radius: 10px;
             padding: 12px 14px;
@@ -173,6 +186,7 @@
             justify-content: space-between;
             align-items: center;
             font-size: 0.9rem;
+            color: var(--text-muted);
         }
 
         .route-details span {
@@ -183,8 +197,8 @@
         #btn-start-route {
             display: block !important;
             width: 100%;
-            background: linear-gradient(135deg, #38bdf8, #0284c7);
-            color: #0f172a;
+            background: linear-gradient(135deg, var(--accent), #0284c7);
+            color: #ffffff;
             border: none;
             border-radius: 8px;
             padding: 10px;
@@ -226,6 +240,33 @@
             background: rgba(239, 68, 68, 0.15);
         }
 
+        /* Botão de Alternar Modo Claro/Escuro (Canto Inferior Esquerdo) */
+        #btn-theme-toggle {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            z-index: 1000;
+            width: 56px;
+            height: 56px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            border-radius: 50%;
+            color: var(--accent);
+            font-size: 1.4rem;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), 0 0 15px var(--accent-glow);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #btn-theme-toggle:hover {
+            transform: scale(1.08);
+        }
+
+        /* Botão Recentralizar (Canto Inferior Direito) */
         #btn-recenter {
             display: none;
             position: absolute;
@@ -249,7 +290,6 @@
 
         #btn-recenter:hover {
             transform: scale(1.08);
-            background: rgba(15, 23, 42, 0.9);
         }
 
         @keyframes fadeIn {
@@ -287,6 +327,10 @@
     <!-- Botão Sair da Navegação (Canto Superior Direito) -->
     <button id="btn-exit-navigation" title="Sair da Navegação">🛑 Sair da Navegação</button>
 
+    <!-- Botão Modo Claro / Escuro (Canto Inferior Esquerdo) -->
+    <button id="btn-theme-toggle" title="Alternar Modo Claro/Escuro">🌙</button>
+
+    <!-- Botão Recentralizar (Canto Inferior Direito) -->
     <button id="btn-recenter" title="Voltar à sua localização">📍</button>
 
     <div id="map"></div>
@@ -295,7 +339,7 @@
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
 
     <script>
-        const DB_KEY = 'neomap_offline_places_v7';
+        const DB_KEY = 'neomap_offline_places_v8';
         
         function getSavedPlaces() {
             try {
@@ -331,13 +375,36 @@
             renderer: L.canvas() 
         }).setView([0, 0], 2);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        // Camada de Tiles dinâmica (Dark/Light CartoCDN)
+        let currentTheme = 'dark';
+        let tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap & CARTO',
             maxZoom: 22,
             updateWhenIdle: false,
             keepBuffer: 12,
             unloadInvisibleTiles: false
         }).addTo(map);
+
+        function setTheme(theme) {
+            currentTheme = theme;
+            map.removeLayer(tileLayer);
+            const tileStyle = theme === 'light' ? 'light_all' : 'dark_all';
+            tileLayer = L.tileLayer(`https://{s}.basemaps.cartocdn.com/${tileStyle}/{z}/{x}/{y}{r}.png`, {
+                attribution: '&copy; OpenStreetMap & CARTO',
+                maxZoom: 22,
+                updateWhenIdle: false,
+                keepBuffer: 12,
+                unloadInvisibleTiles: false
+            }).addTo(map);
+
+            if (theme === 'light') {
+                document.body.classList.add('light-mode');
+                btnThemeToggle.textContent = '☀️';
+            } else {
+                document.body.classList.remove('light-mode');
+                btnThemeToggle.textContent = '🌙';
+            }
+        }
 
         let userCoords = null;
         let marker = null;
@@ -352,12 +419,17 @@
         const mainPanel = document.getElementById('main-panel');
         const btnRecenter = document.getElementById('btn-recenter');
         const btnExitNavigation = document.getElementById('btn-exit-navigation');
+        const btnThemeToggle = document.getElementById('btn-theme-toggle');
         const searchInput = document.getElementById('search-input');
         const searchResults = document.getElementById('search-results');
         const routeInfoPanel = document.getElementById('route-info-panel');
         const distVal = document.getElementById('dist-val');
         const timeVal = document.getElementById('time-val');
         const btnStartRoute = document.getElementById('btn-start-route');
+
+        btnThemeToggle.onclick = () => {
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        };
 
         const emojiMap = { foot: '🚶', bike: '🚲', motorcycle: '🏍️', car: '🚗' };
 
@@ -543,7 +615,7 @@
             }
         }
 
-        // Iniciar Rota: Oculta o painel principal e mostra o botão vermelho no canto superior direito
+        // Iniciar Rota: Adiciona a classe .hidden para garantir o recolhimento completo dos elementos do topo
         btnStartRoute.onclick = () => {
             if (!userCoords || !destinationCoords) return;
 
@@ -551,16 +623,16 @@
             following = true;
             btnRecenter.style.display = 'none';
             
-            // Esconde o painel principal
+            // Oculta completamente o painel principal superior
             mainPanel.classList.add('hidden');
-            // Exibe o botão vermelho de saída
+            // Exibe o botão de saída no canto superior direito
             btnExitNavigation.style.display = 'flex';
 
             map.setView(userCoords, map.getZoom(), { animate: true });
             fetchRouteGeometry(true);
         };
 
-        // Sair da Navegação: Restaura o painel principal e oculta a rota e o marcador de destino
+        // Sair da Navegação: Restaura a interface padrão
         btnExitNavigation.onclick = () => {
             routeActive = false;
             rawRouteCoords = null;
@@ -576,7 +648,6 @@
                 destinationMarker = null;
             }
 
-            // Oculta o botão vermelho e mostra novamente o painel principal
             btnExitNavigation.style.display = 'none';
             mainPanel.classList.remove('hidden');
             routeInfoPanel.style.display = 'none';
@@ -606,7 +677,7 @@
                         routePolyline.redraw();
                     } else {
                         routePolyline = L.polyline(rawRouteCoords, {
-                            color: '#38bdf8',
+                            color: currentTheme === 'light' ? '#0284c7' : '#38bdf8',
                             weight: 8,
                             opacity: 0.9,
                             lineCap: 'round',

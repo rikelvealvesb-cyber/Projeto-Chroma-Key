@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NeoMap Ultra - Navegação Autônoma Perfeita</title>
+    <title>NeoMap Ultra - Navegação Avançada</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -172,6 +172,24 @@
             font-weight: 600;
         }
 
+        #btn-start-route {
+            width: 100%;
+            background: linear-gradient(135deg, #38bdf8, #0284c7);
+            color: #0f172a;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            box-shadow: 0 0 15px var(--accent-glow);
+            transition: transform 0.2s;
+        }
+
+        #btn-start-route:active {
+            transform: scale(0.97);
+        }
+
         #btn-recenter {
             display: none;
             position: absolute;
@@ -226,6 +244,7 @@
                 <div>Distância: <span id="dist-val">--</span></div>
                 <div>Tempo: <span id="time-val">--</span></div>
             </div>
+            <button id="btn-start-route">Iniciar Rota</button>
         </div>
     </div>
 
@@ -238,7 +257,7 @@
 
     <script>
         // --- 1. BANCO DE DADOS LOCAL (LocalStorage) ---
-        const DB_KEY = 'neomap_offline_places_v2';
+        const DB_KEY = 'neomap_offline_places_v3';
         
         function getSavedPlaces() {
             try {
@@ -266,7 +285,7 @@
             return results;
         }
 
-        // --- 2. INICIALIZAÇÃO DO MAPA OTIMIZADO (Sem flash branco e com buffer estendido) ---
+        // --- 2. INICIALIZAÇÃO DO MAPA OTIMIZADO ---
         const map = L.map('map', { 
             zoomControl: false,
             rotate: true,
@@ -289,7 +308,6 @@
         let following = true;
         let routeActive = false;
         let currentTransport = 'foot';
-        let userZoomLevel = 19; // Mantém o nível de zoom perfeitamente sincronizado
 
         const btnRecenter = document.getElementById('btn-recenter');
         const searchInput = document.getElementById('search-input');
@@ -297,6 +315,7 @@
         const routeInfoPanel = document.getElementById('route-info-panel');
         const distVal = document.getElementById('dist-val');
         const timeVal = document.getElementById('time-val');
+        const btnStartRoute = document.getElementById('btn-start-route');
 
         const emojiMap = { foot: '🚶', bike: '🚲', motorcycle: '🏍️', car: '🚗' };
 
@@ -309,32 +328,27 @@
             });
         }
 
-        // --- 3. ATUALIZAÇÃO E SINCRONIZAÇÃO TOTAL DE ZOOM E CÂMERA ---
+        // --- 3. ATUALIZAÇÃO SEM FORÇAR O ZOOM ---
         function updateLocation(pos) {
             userCoords = [pos.coords.latitude, pos.coords.longitude];
 
             if (!marker) {
                 marker = L.marker(userCoords, { icon: getUserIcon() }).addTo(map);
-                map.setView(userCoords, userZoomLevel, { animate: true });
+                map.setView(userCoords, 19, { animate: true });
             } else {
                 marker.setLatLng(userCoords);
                 marker.setIcon(getUserIcon());
             }
 
-            // Sincroniza a câmera preservando rigorosamente o zoom atual do usuário
+            // Acompanha a posição mas mantém livre o nível de zoom escolhido pelo usuário
             if (following) {
                 map.setView(userCoords, map.getZoom(), { animate: true });
             }
 
             if (routeActive && destinationCoords) {
-                fetchRouteGeometry();
+                fetchRouteGeometry(false); // Apenas atualiza a geometria sem resetar zoom
             }
         }
-
-        // Captura mudanças manuais de zoom e movimento para manter a sincronia perfeita
-        map.on('zoomend', () => {
-            userZoomLevel = map.getZoom();
-        });
 
         map.on('dragstart zoomstart rotatestart', () => {
             following = false;
@@ -344,7 +358,7 @@
         btnRecenter.onclick = () => {
             if (userCoords) {
                 following = true;
-                map.setView(userCoords, userZoomLevel, { animate: true });
+                map.setView(userCoords, map.getZoom(), { animate: true });
                 btnRecenter.style.display = 'none';
             }
         };
@@ -359,7 +373,7 @@
             });
         }
 
-        // --- 4. BUSCA HÍBRIDA (ONLINE + BANCO LOCAL OFFLINE) ---
+        // --- 4. BUSCA HÍBRIDA ---
         let searchTimeout;
         searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
@@ -392,17 +406,16 @@
                             searchInput.value = place.display_name;
                             searchResults.style.display = 'none';
                             
-                            routeActive = true;
-                            following = true;
-                            btnRecenter.style.display = 'none';
-                            
-                            if (userCoords) {
-                                map.setView(userCoords, userZoomLevel, { animate: true });
-                            } else {
-                                map.setView(destinationCoords, 16, { animate: true });
+                            routeActive = false;
+                            if (routePolyline) {
+                                map.removeLayer(routePolyline);
+                                routePolyline = null;
                             }
-                            
-                            fetchRouteGeometry();
+
+                            following = false;
+                            btnRecenter.style.display = 'flex';
+                            map.setView(destinationCoords, 16, { animate: true });
+                            calculateRouteInfo(); // Apenas calcula e mostra o painel com o botão "Iniciar Rota"
                         };
                         searchResults.appendChild(div);
                     });
@@ -426,19 +439,61 @@
                 currentTransport = targetBtn.getAttribute('data-mode');
 
                 if (marker) marker.setIcon(getUserIcon());
-                if (destinationCoords) fetchRouteGeometry();
+                if (destinationCoords) {
+                    if (routeActive) {
+                        fetchRouteGeometry(true);
+                    } else {
+                        calculateRouteInfo();
+                    }
+                }
             });
         });
 
-        // --- 5. PERFIS OSRM ESPECÍFICOS E CÁLCULO PRECISO POR CATEGORIA ---
+        // --- 5. PERFIS E CÁLCULO PRECISO ---
         const transportConfig = {
-            foot: { osrm: 'foot', speedKmH: 4.5 },         // Caminhada (~4.5 km/h)
-            bike: { osrm: 'bike', speedKmH: 15.0 },       // Bicicleta (~15 km/h)
-            motorcycle: { osrm: 'bike', speedKmH: 45.0 }, // Moto (perfil OSRM otimizado para vias urbanas a ~45 km/h)
-            car: { osrm: 'car', speedKmH: 35.0 }          // Carro em tráfego urbano (~35 km/h)
+            foot: { osrm: 'foot', speedKmH: 4.5 },
+            bike: { osrm: 'bike', speedKmH: 15.0 },
+            motorcycle: { osrm: 'bike', speedKmH: 45.0 },
+            car: { osrm: 'car', speedKmH: 35.0 }
         };
 
-        async function fetchRouteGeometry() {
+        async function calculateRouteInfo() {
+            if (!userCoords || !destinationCoords) return;
+
+            const config = transportConfig[currentTransport];
+            const url = `https://router.project-osrm.org/route/v1/${config.osrm}/${userCoords[1]},${userCoords[0]};${destinationCoords[1]},${destinationCoords[0]}?overview=false`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.routes && data.routes.length > 0) {
+                    const route = data.routes[0];
+                    const distanceKm = route.distance / 1000;
+                    const calculatedMinutes = Math.max(1, Math.round((distanceKm / config.speedKmH) * 60));
+
+                    distVal.textContent = distanceKm.toFixed(1) + ' km';
+                    timeVal.textContent = calculatedMinutes + ' min';
+                    routeInfoPanel.style.display = 'flex';
+                }
+            } catch (err) {
+                console.error("Erro ao calcular info da rota:", err);
+            }
+        }
+
+        // Botão Iniciar Rota: Desenha a linha no mapa de acordo com a categoria e centraliza no usuário
+        btnStartRoute.onclick = () => {
+            if (!userCoords || !destinationCoords) return;
+
+            routeActive = true;
+            following = true;
+            btnRecenter.style.display = 'none';
+            routeInfoPanel.style.display = 'none';
+
+            map.setView(userCoords, map.getZoom(), { animate: true });
+            fetchRouteGeometry(true);
+        };
+
+        async function fetchRouteGeometry(updateInfo = false) {
             if (!userCoords || !destinationCoords) return;
 
             const config = transportConfig[currentTransport];
@@ -463,13 +518,13 @@
                         }).addTo(map);
                     }
 
-                    const distanceKm = route.distance / 1000;
-                    // Cálculo dedicado utilizando rigorosamente a velocidade média da categoria escolhida
-                    const calculatedMinutes = Math.max(1, Math.round((distanceKm / config.speedKmH) * 60));
+                    if (updateInfo) {
+                        const distanceKm = route.distance / 1000;
+                        const calculatedMinutes = Math.max(1, Math.round((distanceKm / config.speedKmH) * 60));
 
-                    distVal.textContent = distanceKm.toFixed(1) + ' km';
-                    timeVal.textContent = calculatedMinutes + ' min';
-                    routeInfoPanel.style.display = 'flex';
+                        distVal.textContent = distanceKm.toFixed(1) + ' km';
+                        timeVal.textContent = calculatedMinutes + ' min';
+                    }
                 }
             } catch (err) {
                 console.error("Erro ao processar rota:", err);

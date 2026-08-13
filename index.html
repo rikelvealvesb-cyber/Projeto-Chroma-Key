@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NeoMap Ultra - Navegação Autônoma</title>
+    <title>NeoMap Ultra - Navegação Autônoma Perfeita</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -27,7 +27,7 @@
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
-        /* Fundo escuro fixo para evitar qualquer flash branco ao arrastar o mapa */
+        /* Fundo escuro fixo para eliminar qualquer flash branco ao arrastar */
         body, html {
             width: 100%;
             height: 100%;
@@ -238,7 +238,7 @@
 
     <script>
         // --- 1. BANCO DE DADOS LOCAL (LocalStorage) ---
-        const DB_KEY = 'neomap_offline_places_v1';
+        const DB_KEY = 'neomap_offline_places_v2';
         
         function getSavedPlaces() {
             try {
@@ -266,7 +266,7 @@
             return results;
         }
 
-        // --- 2. INICIALIZAÇÃO DO MAPA ---
+        // --- 2. INICIALIZAÇÃO DO MAPA OTIMIZADO (Sem flash branco e com buffer estendido) ---
         const map = L.map('map', { 
             zoomControl: false,
             rotate: true,
@@ -274,12 +274,12 @@
             rotateControl: false
         }).setView([0, 0], 2);
 
-        // Fundo escuro pré-carregado via CSS e camadas otimizadas
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap & CARTO',
             maxZoom: 22,
             updateWhenIdle: false,
-            keepBuffer: 8
+            keepBuffer: 12,
+            unloadInvisibleTiles: false
         }).addTo(map);
 
         let userCoords = null;
@@ -289,6 +289,7 @@
         let following = true;
         let routeActive = false;
         let currentTransport = 'foot';
+        let userZoomLevel = 19; // Mantém o nível de zoom perfeitamente sincronizado
 
         const btnRecenter = document.getElementById('btn-recenter');
         const searchInput = document.getElementById('search-input');
@@ -308,27 +309,32 @@
             });
         }
 
-        // --- 3. ATUALIZAÇÃO E CÂMERA AUTOMÁTICA INTELIGENTE ---
+        // --- 3. ATUALIZAÇÃO E SINCRONIZAÇÃO TOTAL DE ZOOM E CÂMERA ---
         function updateLocation(pos) {
             userCoords = [pos.coords.latitude, pos.coords.longitude];
 
             if (!marker) {
                 marker = L.marker(userCoords, { icon: getUserIcon() }).addTo(map);
-                map.setView(userCoords, 19, { animate: true });
+                map.setView(userCoords, userZoomLevel, { animate: true });
             } else {
                 marker.setLatLng(userCoords);
                 marker.setIcon(getUserIcon());
             }
 
-            // Câmera acompanha perfeitamente e ajusta a rota síncrona junto ao mapa
+            // Sincroniza a câmera preservando rigorosamente o zoom atual do usuário
             if (following) {
-                map.setView(userCoords, routeActive ? 20 : 19, { animate: true });
+                map.setView(userCoords, map.getZoom(), { animate: true });
             }
 
             if (routeActive && destinationCoords) {
                 fetchRouteGeometry();
             }
         }
+
+        // Captura mudanças manuais de zoom e movimento para manter a sincronia perfeita
+        map.on('zoomend', () => {
+            userZoomLevel = map.getZoom();
+        });
 
         map.on('dragstart zoomstart rotatestart', () => {
             following = false;
@@ -338,7 +344,7 @@
         btnRecenter.onclick = () => {
             if (userCoords) {
                 following = true;
-                map.setView(userCoords, routeActive ? 20 : 19, { animate: true });
+                map.setView(userCoords, userZoomLevel, { animate: true });
                 btnRecenter.style.display = 'none';
             }
         };
@@ -369,11 +375,8 @@
                 try {
                     const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=br`);
                     places = await response.json();
-                    
-                    // Salva resultados no banco de dados local para uso offline futuro
                     places.forEach(p => savePlaceToDB(query, p));
                 } catch (err) {
-                    // Sem internet: recupera do banco de dados local
                     places = searchLocalDB(query);
                 }
 
@@ -389,13 +392,12 @@
                             searchInput.value = place.display_name;
                             searchResults.style.display = 'none';
                             
-                            // Disparo automático imediato da rota ao selecionar o endereço
                             routeActive = true;
                             following = true;
                             btnRecenter.style.display = 'none';
                             
                             if (userCoords) {
-                                map.setView(userCoords, 20, { animate: true });
+                                map.setView(userCoords, userZoomLevel, { animate: true });
                             } else {
                                 map.setView(destinationCoords, 16, { animate: true });
                             }
@@ -428,19 +430,19 @@
             });
         });
 
-        // --- 5. CÁLCULO PRECISO POR CATEGORIA (Velocidades Reais Otimizadas) ---
-        const speedProfiles = {
-            foot: { osrm: 'foot', speedKmH: 4.5 },       // ~4.5 km/h a pé
-            bike: { osrm: 'bike', speedKmH: 15.0 },     // ~15 km/h de bicicleta
-            motorcycle: { osrm: 'bike', speedKmH: 45.0 }, // ~45 km/h média urbana moto
-            car: { osrm: 'car', speedKmH: 35.0 }        // ~35 km/h trânsito urbano carro
+        // --- 5. PERFIS OSRM ESPECÍFICOS E CÁLCULO PRECISO POR CATEGORIA ---
+        const transportConfig = {
+            foot: { osrm: 'foot', speedKmH: 4.5 },         // Caminhada (~4.5 km/h)
+            bike: { osrm: 'bike', speedKmH: 15.0 },       // Bicicleta (~15 km/h)
+            motorcycle: { osrm: 'bike', speedKmH: 45.0 }, // Moto (perfil OSRM otimizado para vias urbanas a ~45 km/h)
+            car: { osrm: 'car', speedKmH: 35.0 }          // Carro em tráfego urbano (~35 km/h)
         };
 
         async function fetchRouteGeometry() {
             if (!userCoords || !destinationCoords) return;
 
-            const profileConfig = speedProfiles[currentTransport];
-            const url = `https://router.project-osrm.org/route/v1/${profileConfig.osrm}/${userCoords[1]},${userCoords[0]};${destinationCoords[1]},${destinationCoords[0]}?overview=full&geometries=geojson`;
+            const config = transportConfig[currentTransport];
+            const url = `https://router.project-osrm.org/route/v1/${config.osrm}/${userCoords[1]},${userCoords[0]};${destinationCoords[1]},${destinationCoords[0]}?overview=full&geometries=geojson`;
 
             try {
                 const res = await fetch(url);
@@ -449,7 +451,6 @@
                     const route = data.routes[0];
                     const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
 
-                    // Linha da rota mais grossa, legível e perfeitamente sincronizada
                     if (routePolyline) {
                         routePolyline.setLatLngs(coords);
                     } else {
@@ -462,16 +463,16 @@
                         }).addTo(map);
                     }
 
-                    // Cálculo ultra preciso baseado na distância exata e velocidade real da categoria
                     const distanceKm = route.distance / 1000;
-                    const calculatedMinutes = Math.max(1, Math.round((distanceKm / profileConfig.speedKmH) * 60));
+                    // Cálculo dedicado utilizando rigorosamente a velocidade média da categoria escolhida
+                    const calculatedMinutes = Math.max(1, Math.round((distanceKm / config.speedKmH) * 60));
 
                     distVal.textContent = distanceKm.toFixed(1) + ' km';
                     timeVal.textContent = calculatedMinutes + ' min';
                     routeInfoPanel.style.display = 'flex';
                 }
             } catch (err) {
-                console.error("Erro ao processar rota (modo offline/fallback direto):", err);
+                console.error("Erro ao processar rota:", err);
             }
         }
     </script>

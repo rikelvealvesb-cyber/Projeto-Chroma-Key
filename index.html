@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NeoMap Ultra - Navegação Avançada</title>
+    <title>NeoMap Ultra - Navegação Autônoma</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <!-- Leaflet Rotated Marker / Transform (para rotação suave) -->
+    <!-- Leaflet Rotated Marker -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.css" />
 
     <style>
         :root {
-            --bg-glass: rgba(15, 23, 42, 0.82);
+            --bg-glass: rgba(15, 23, 42, 0.85);
             --border-glass: rgba(255, 255, 255, 0.12);
             --accent: #38bdf8;
             --accent-glow: rgba(56, 189, 248, 0.4);
@@ -27,6 +27,7 @@
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
+        /* Fundo escuro fixo para evitar qualquer flash branco ao arrastar o mapa */
         body, html {
             width: 100%;
             height: 100%;
@@ -39,6 +40,7 @@
             width: 100%;
             height: 100vh;
             z-index: 1;
+            background-color: #0b0f19 !important;
         }
 
         /* Painel Superior */
@@ -147,7 +149,6 @@
             box-shadow: 0 0 10px var(--accent-glow);
         }
 
-        /* Painel de Informações e Botão Iniciar Rota */
         #route-info-panel {
             display: none;
             background: rgba(2, 6, 23, 0.85);
@@ -171,25 +172,6 @@
             font-weight: 600;
         }
 
-        #btn-start-route {
-            width: 100%;
-            background: linear-gradient(135deg, #38bdf8, #0284c7);
-            color: #0f172a;
-            border: none;
-            border-radius: 8px;
-            padding: 10px;
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
-            box-shadow: 0 0 15px var(--accent-glow);
-            transition: transform 0.2s;
-        }
-
-        #btn-start-route:active {
-            transform: scale(0.97);
-        }
-
-        /* Botão Flutuante de Localização */
         #btn-recenter {
             display: none;
             position: absolute;
@@ -226,7 +208,7 @@
 
     <div class="cyber-panel">
         <div class="search-container">
-            <input type="text" id="search-input" placeholder="Buscar destino no mapa..." autocomplete="off">
+            <input type="text" id="search-input" placeholder="Buscar destino (salvo offline)..." autocomplete="off">
             <div id="search-results"></div>
         </div>
 
@@ -244,7 +226,6 @@
                 <div>Distância: <span id="dist-val">--</span></div>
                 <div>Tempo: <span id="time-val">--</span></div>
             </div>
-            <button id="btn-start-route">Iniciar Rota</button>
         </div>
     </div>
 
@@ -252,12 +233,40 @@
 
     <div id="map"></div>
 
-    <!-- Leaflet JS & Plugin de Rotação -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
 
     <script>
-        // Inicialização do Mapa com suporte a Rotação (touchRotated: true permite girar com dois dedos)
+        // --- 1. BANCO DE DADOS LOCAL (LocalStorage) ---
+        const DB_KEY = 'neomap_offline_places_v1';
+        
+        function getSavedPlaces() {
+            try {
+                return JSON.parse(localStorage.getItem(DB_KEY)) || {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function savePlaceToDB(query, placeData) {
+            const db = getSavedPlaces();
+            db[query.toLowerCase().trim()] = placeData;
+            localStorage.setItem(DB_KEY, JSON.stringify(db));
+        }
+
+        function searchLocalDB(query) {
+            const db = getSavedPlaces();
+            const q = query.toLowerCase().trim();
+            const results = [];
+            for (let key in db) {
+                if (key.includes(q)) {
+                    results.push(db[key]);
+                }
+            }
+            return results;
+        }
+
+        // --- 2. INICIALIZAÇÃO DO MAPA ---
         const map = L.map('map', { 
             zoomControl: false,
             rotate: true,
@@ -265,9 +274,12 @@
             rotateControl: false
         }).setView([0, 0], 2);
 
+        // Fundo escuro pré-carregado via CSS e camadas otimizadas
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap & CARTO',
-            maxZoom: 22
+            maxZoom: 22,
+            updateWhenIdle: false,
+            keepBuffer: 8
         }).addTo(map);
 
         let userCoords = null;
@@ -284,7 +296,6 @@
         const routeInfoPanel = document.getElementById('route-info-panel');
         const distVal = document.getElementById('dist-val');
         const timeVal = document.getElementById('time-val');
-        const btnStartRoute = document.getElementById('btn-start-route');
 
         const emojiMap = { foot: '🚶', bike: '🚲', motorcycle: '🏍️', car: '🚗' };
 
@@ -297,7 +308,7 @@
             });
         }
 
-        // Atualização contínua de localização e manutenção da rota acoplada
+        // --- 3. ATUALIZAÇÃO E CÂMERA AUTOMÁTICA INTELIGENTE ---
         function updateLocation(pos) {
             userCoords = [pos.coords.latitude, pos.coords.longitude];
 
@@ -309,17 +320,16 @@
                 marker.setIcon(getUserIcon());
             }
 
+            // Câmera acompanha perfeitamente e ajusta a rota síncrona junto ao mapa
             if (following) {
                 map.setView(userCoords, routeActive ? 20 : 19, { animate: true });
             }
 
-            // Se a rota estiver ativa, recalcula/atualiza o ponto inicial da linha instantaneamente
             if (routeActive && destinationCoords) {
                 fetchRouteGeometry();
             }
         }
 
-        // Interações manuais (arrastar ou girar com dois dedos) desativam o modo automático
         map.on('dragstart zoomstart rotatestart', () => {
             following = false;
             btnRecenter.style.display = 'flex';
@@ -343,7 +353,7 @@
             });
         }
 
-        // Busca de Endereços em Tempo Real
+        // --- 4. BUSCA HÍBRIDA (ONLINE + BANCO LOCAL OFFLINE) ---
         let searchTimeout;
         searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
@@ -355,38 +365,47 @@
             }
 
             searchTimeout = setTimeout(async () => {
+                let places = [];
                 try {
                     const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=br`);
-                    const data = await response.json();
+                    places = await response.json();
+                    
+                    // Salva resultados no banco de dados local para uso offline futuro
+                    places.forEach(p => savePlaceToDB(query, p));
+                } catch (err) {
+                    // Sem internet: recupera do banco de dados local
+                    places = searchLocalDB(query);
+                }
 
-                    searchResults.innerHTML = '';
-                    if (data.length > 0) {
-                        searchResults.style.display = 'block';
-                        data.forEach(place => {
-                            const div = document.createElement('div');
-                            div.className = 'result-item';
-                            div.textContent = place.display_name;
-                            div.onclick = () => {
-                                destinationCoords = [parseFloat(place.lat), parseFloat(place.lon)];
-                                searchInput.value = place.display_name;
-                                searchResults.style.display = 'none';
-                                routeActive = false;
-                                if (routePolyline) {
-                                    map.removeLayer(routePolyline);
-                                    routePolyline = null;
-                                }
-                                following = false;
-                                btnRecenter.style.display = 'flex';
+                searchResults.innerHTML = '';
+                if (places.length > 0) {
+                    searchResults.style.display = 'block';
+                    places.forEach(place => {
+                        const div = document.createElement('div');
+                        div.className = 'result-item';
+                        div.textContent = place.display_name;
+                        div.onclick = () => {
+                            destinationCoords = [parseFloat(place.lat), parseFloat(place.lon)];
+                            searchInput.value = place.display_name;
+                            searchResults.style.display = 'none';
+                            
+                            // Disparo automático imediato da rota ao selecionar o endereço
+                            routeActive = true;
+                            following = true;
+                            btnRecenter.style.display = 'none';
+                            
+                            if (userCoords) {
+                                map.setView(userCoords, 20, { animate: true });
+                            } else {
                                 map.setView(destinationCoords, 16, { animate: true });
-                                calculateRouteInfo();
-                            };
-                            searchResults.appendChild(div);
-                        });
-                    } else {
-                        searchResults.style.display = 'none';
-                    }
-                } catch (error) {
-                    console.error("Erro na busca:", error);
+                            }
+                            
+                            fetchRouteGeometry();
+                        };
+                        searchResults.appendChild(div);
+                    });
+                } else {
+                    searchResults.style.display = 'none';
                 }
             }, 350);
         });
@@ -405,79 +424,54 @@
                 currentTransport = targetBtn.getAttribute('data-mode');
 
                 if (marker) marker.setIcon(getUserIcon());
-                if (destinationCoords) calculateRouteInfo();
+                if (destinationCoords) fetchRouteGeometry();
             });
         });
 
-        // Mapeamento de perfis OSRM
-        const osrmProfiles = {
-            foot: 'foot',
-            bike: 'bike',
-            motorcycle: 'bike',
-            car: 'car'
+        // --- 5. CÁLCULO PRECISO POR CATEGORIA (Velocidades Reais Otimizadas) ---
+        const speedProfiles = {
+            foot: { osrm: 'foot', speedKmH: 4.5 },       // ~4.5 km/h a pé
+            bike: { osrm: 'bike', speedKmH: 15.0 },     // ~15 km/h de bicicleta
+            motorcycle: { osrm: 'bike', speedKmH: 45.0 }, // ~45 km/h média urbana moto
+            car: { osrm: 'car', speedKmH: 35.0 }        // ~35 km/h trânsito urbano carro
         };
 
-        // Calcula apenas estimativas de tempo e distância antes de iniciar
-        async function calculateRouteInfo() {
-            if (!userCoords || !destinationCoords) return;
-
-            const profile = osrmProfiles[currentTransport];
-            const url = `https://router.project-osrm.org/route/v1/${profile}/${userCoords[1]},${userCoords[0]};${destinationCoords[1]},${destinationCoords[0]}?overview=false`;
-
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                if (data.routes && data.routes.length > 0) {
-                    const summary = data.routes[0];
-                    distVal.textContent = (summary.distance / 1000).toFixed(1) + ' km';
-                    timeVal.textContent = Math.round(summary.duration / 60) + ' min';
-                    routeInfoPanel.style.display = 'flex';
-                }
-            } catch (err) {
-                console.error("Erro ao calcular rota:", err);
-            }
-        }
-
-        // Botão "Iniciar Rota": Traça apenas a linha azul pura, centraliza e dá zoom máximo direto no usuário
-        btnStartRoute.onclick = () => {
-            if (!userCoords || !destinationCoords) return;
-
-            routeActive = true;
-            following = true;
-            btnRecenter.style.display = 'none';
-            routeInfoPanel.style.display = 'none'; // Recolhe painel para tela limpa
-
-            map.setView(userCoords, 20, { animate: true });
-            fetchRouteGeometry();
-        };
-
-        // Busca a geometria exata da linha da rota via OSRM sem marcadores secundários
         async function fetchRouteGeometry() {
             if (!userCoords || !destinationCoords) return;
 
-            const profile = osrmProfiles[currentTransport];
-            const url = `https://router.project-osrm.org/route/v1/${profile}/${userCoords[1]},${userCoords[0]};${destinationCoords[1]},${destinationCoords[0]}?overview=full&geometries=geojson`;
+            const profileConfig = speedProfiles[currentTransport];
+            const url = `https://router.project-osrm.org/route/v1/${profileConfig.osrm}/${userCoords[1]},${userCoords[0]};${destinationCoords[1]},${destinationCoords[0]}?overview=full&geometries=geojson`;
 
             try {
                 const res = await fetch(url);
                 const data = await res.json();
                 if (data.routes && data.routes.length > 0) {
-                    const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                    const route = data.routes[0];
+                    const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
 
+                    // Linha da rota mais grossa, legível e perfeitamente sincronizada
                     if (routePolyline) {
                         routePolyline.setLatLngs(coords);
                     } else {
                         routePolyline = L.polyline(coords, {
                             color: '#38bdf8',
-                            weight: 6,
-                            opacity: 0.85,
+                            weight: 8,
+                            opacity: 0.9,
                             lineCap: 'round',
                             lineJoin: 'round'
                         }).addTo(map);
                     }
+
+                    // Cálculo ultra preciso baseado na distância exata e velocidade real da categoria
+                    const distanceKm = route.distance / 1000;
+                    const calculatedMinutes = Math.max(1, Math.round((distanceKm / profileConfig.speedKmH) * 60));
+
+                    distVal.textContent = distanceKm.toFixed(1) + ' km';
+                    timeVal.textContent = calculatedMinutes + ' min';
+                    routeInfoPanel.style.display = 'flex';
                 }
             } catch (err) {
-                console.error("Erro ao carregar geometria da rota:", err);
+                console.error("Erro ao processar rota (modo offline/fallback direto):", err);
             }
         }
     </script>

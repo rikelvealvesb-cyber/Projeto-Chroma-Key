@@ -2,88 +2,446 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>NeoMap Ultra</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeoMap Ultra - Futuro & Minimalista</title>
+    
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <!-- Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; }
-        #map { height: 100vh; }
-        
-        .controls { position: absolute; top: 20px; left: 20px; z-index: 1000; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 280px; }
-        select, input { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; }
-        
-        #btn-recenter { display: none; position: absolute; bottom: 30px; right: 30px; z-index: 1000; padding: 12px; background: #007bff; color: white; border: none; border-radius: 50%; cursor: pointer; }
+        :root {
+            --bg-glass: rgba(15, 23, 42, 0.75);
+            --border-glass: rgba(255, 255, 255, 0.12);
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.4);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0b0f19;
+            color: var(--text-main);
+        }
+
+        #map {
+            width: 100%;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        /* Painel de Controle Superior (Futurista & Minimalista) */
+        .cyber-panel {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            width: 90%;
+            max-width: 480px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 14px 18px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px var(--accent-glow);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-container input {
+            width: 100%;
+            background: rgba(2, 6, 23, 0.6);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-container input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        /* Resultados da Busca em Tempo Real */
+        #search-results {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1001;
+            display: none;
+        }
+
+        .result-item {
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: background 0.2s;
+        }
+
+        .result-item:hover {
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--text-main);
+        }
+
+        /* Seletores de Transporte e Info */
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .transport-selector {
+            display: flex;
+            background: rgba(2, 6, 23, 0.6);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            padding: 4px;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .transport-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 0;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .transport-btn.active {
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        /* Painel de Rota (Distância e Tempo) */
+        #route-info {
+            display: none;
+            background: rgba(2, 6, 23, 0.8);
+            border: 1px solid var(--border-glass);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        #route-info span {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Botão Flutuante de Localização */
+        #btn-recenter {
+            display: none;
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            width: 56px;
+            height: 56px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            border-radius: 50%;
+            color: var(--accent);
+            font-size: 1.4rem;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), 0 0 15px var(--accent-glow);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            align-items: center;
+            justify-content: center;
+        }
+
+        #btn-recenter:hover {
+            transform: scale(1.08);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        /* Ocultar instruções padrão feias do Leaflet Routing Machine */
+        .leaflet-routing-container {
+            display: none !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
 
-<div class="controls">
-    <input type="text" placeholder="Para onde vamos?">
-    <select id="transport">
-        <option value="pedestrian">🚶 A pé</option>
-        <option value="bike">🚲 Bike</option>
-        <option value="motorcycle">🏍️ Moto</option>
-        <option value="car">🚗 Carro</option>
-    </select>
-</div>
+    <!-- Painel Principal Futurista -->
+    <div class="cyber-panel">
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Buscar destino no mapa..." autocomplete="off">
+            <div id="search-results"></div>
+        </div>
 
-<button id="btn-recenter">📍</button>
-<div id="map"></div>
+        <div class="controls-row">
+            <div class="transport-selector">
+                <button class="transport-btn active" data-mode="foot" title="A pé">🚶</button>
+                <button class="transport-btn" data-mode="bike" title="Bike">🚲</button>
+                <button class="transport-btn" data-mode="motorcycle" title="Moto">🏍️</button>
+                <button class="transport-btn" data-mode="car" title="Carro">🚗</button>
+            </div>
+        </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    const map = L.map('map').setView([-23.5505, -46.6333], 18); // Zoom bem próximo (18)
-    
-    // Mapa claro e minimalista (CartoDB Positron)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap & CARTO'
-    }).addTo(map);
+        <div id="route-info">
+            <div>Distância: <span id="dist-val">--</span></div>
+            <div>Tempo: <span id="time-val">--</span></div>
+        </div>
+    </div>
 
-    let marker, userCoords;
-    let following = true;
+    <!-- Botão de Recentrar -->
+    <button id="btn-recenter" title="Voltar à sua localização">📍</button>
 
-    const btnRecenter = document.getElementById('btn-recenter');
-    const transportSelect = document.getElementById('transport');
+    <!-- Mapa -->
+    <div id="map"></div>
 
-    // Função para atualizar o ícone baseado no transporte
-    function getIcon() {
-        const emoji = { pedestrian: '🚶', bike: '🚲', motorcycle: '🏍️', car: '🚗' };
-        return L.divIcon({
-            className: 'custom-marker',
-            html: `<div style="font-size: 24px;">${emoji[transportSelect.value]}</div>`,
-            iconSize: [30, 30]
+    <!-- Scripts Leaflet & Routing -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+    <script>
+        // Inicialização do Mapa com Tema Escuro Minimalista (CartoDB Dark Matter)
+        const map = L.map('map', { zoomControl: false }).setView([0, 0], 2);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap & CARTO',
+            maxZoom: 22
+        }).addTo(map);
+
+        let userCoords = null;
+        let marker = null;
+        let routingControl = null;
+        let destinationCoords = null;
+        let following = true;
+        let currentTransport = 'foot'; // foot, bike, motorcycle, car
+
+        const btnRecenter = document.getElementById('btn-recenter');
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        const routeInfo = document.getElementById('route-info');
+        const distVal = document.getElementById('dist-val');
+        const timeVal = document.getElementById('time-val');
+
+        // Mapeamento de perfis para o OSRM
+        const profileMap = {
+            foot: 'foot',
+            bike: 'bike',
+            motorcycle: 'bike', // OSRM padrão usa bike/car, simulamos moto com perfil otimizado
+            car: 'car'
+        };
+
+        const emojiMap = { foot: '🚶', bike: '🚲', motorcycle: '🏍️', car: '🚗' };
+
+        // Ícone customizado do usuário
+        function getUserIcon() {
+            return L.divIcon({
+                className: 'custom-user-marker',
+                html: `<div style="font-size: 26px; filter: drop-shadow(0 0 8px rgba(56,189,248,0.8));">${emojiMap[currentTransport]}</div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+        }
+
+        // Função de Atualização de Localização
+        function updateLocation(pos) {
+            userCoords = [pos.coords.latitude, pos.coords.longitude];
+
+            if (!marker) {
+                marker = L.marker(userCoords, { icon: getUserIcon() }).addTo(map);
+                // Primeiro carregamento: Centraliza e dá o maior zoom seguro possível (ex: 19)
+                map.setView(userCoords, 19, { animate: true });
+            } else {
+                marker.setLatLng(userCoords);
+                marker.setIcon(getUserIcon());
+            }
+
+            // Se o modo de seguimento estiver ativo, acompanha o usuário suavemente
+            if (following) {
+                map.setView(userCoords, map.getZoom() < 17 ? 19 : map.getZoom(), { animate: true });
+            }
+
+            // Se houver destino ativo, atualiza a rota em tempo real
+            if (destinationCoords) {
+                updateRoute();
+            }
+        }
+
+        // Detecta quando o usuário interage manualmente com o mapa (bug de zoom corrigido)
+        map.on('dragstart zoomstart', () => {
+            following = false;
+            btnRecenter.style.display = 'flex';
         });
-    }
 
-    function updateLocation(pos) {
-        userCoords = [pos.coords.latitude, pos.coords.longitude];
-        
-        if (!marker) {
-            marker = L.marker(userCoords, { icon: getIcon() }).addTo(map);
-        } else {
-            marker.setLatLng(userCoords);
-            marker.setIcon(getIcon());
+        // Botão para voltar à localização com zoom máximo
+        btnRecenter.onclick = () => {
+            if (userCoords) {
+                following = true;
+                map.setView(userCoords, 19, { animate: true });
+                btnRecenter.style.display = 'none';
+            }
+        };
+
+        // Geolocalização em Tempo Real de Alta Precisão
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(updateLocation, (err) => {
+                console.error("Erro GPS:", err.message);
+            }, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            });
         }
 
-        if (following) {
-            map.setView(userCoords, 18);
+        // Sistema de busca em tempo real (Nominatim OpenStreetMap)
+        let searchTimeout;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+
+            if (query.length < 3) {
+                searchResults.style.display = 'none';
+                return;
+            }
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=br`);
+                    const data = await response.json();
+
+                    searchResults.innerHTML = '';
+                    if (data.length > 0) {
+                        searchResults.style.display = 'block';
+                        data.forEach(place => {
+                            const div = document.createElement('div');
+                            div.className = 'result-item';
+                            div.textContent = place.display_name;
+                            div.onclick = () => {
+                                destinationCoords = [parseFloat(place.lat), parseFloat(place.lon)];
+                                searchInput.value = place.display_name;
+                                searchResults.style.display = 'none';
+                                following = false;
+                                btnRecenter.style.display = 'flex';
+                                map.setView(destinationCoords, 16, { animate: true });
+                                updateRoute();
+                            };
+                            searchResults.appendChild(div);
+                        });
+                    } else {
+                        searchResults.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error("Erro na busca:", error);
+                }
+            }, 350);
+        });
+
+        // Fechar resultados ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
+
+        // Seleção de meio de transporte
+        document.querySelectorAll('.transport-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.transport-btn').forEach(b => b.classList.remove('active'));
+                const targetBtn = e.currentTarget;
+                targetBtn.classList.add('active');
+                currentTransport = targetBtn.getAttribute('data-mode');
+
+                if (marker) {
+                    marker.setIcon(getUserIcon());
+                }
+
+                if (destinationCoords) {
+                    updateRoute();
+                }
+            });
+        });
+
+        // Função para traçar a rota e calcular tempo/km
+        function updateRoute() {
+            if (!userCoords || !destinationCoords) return;
+
+            if (routingControl) {
+                map.removeControl(routingControl);
+            }
+
+            // Mapeia router OSRM
+            const routerService = L.Routing.osrmv1({
+                serviceUrl: 'https://router.project-osrm.org/route/v1',
+                profile: profileMap[currentTransport]
+            });
+
+            routingControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(userCoords[0], userCoords[1]),
+                    L.latLng(destinationCoords[0], destinationCoords[1])
+                ],
+                router: routerService,
+                lineOptions: {
+                    styles: [{ color: '#38bdf8', opacity: 0.8, weight: 5 }]
+                },
+                addWaypoints: false,
+                draggableWaypoints: false,
+                fitSelectedRoutes: true,
+                show: false
+            }).addTo(map);
+
+            routingControl.on('routesfound', function(e) {
+                const route = e.routes[0];
+                const summary = route.summary;
+                
+                const km = (summary.totalDistance / 1000).toFixed(1) + ' km';
+                const minutes = Math.round(summary.totalTime / 60) + ' min';
+
+                distVal.textContent = km;
+                timeVal.textContent = minutes;
+                routeInfo.style.display = 'flex';
+            });
         }
-    }
-
-    // Detectar quando o usuário mexe no mapa
-    map.on('dragstart', () => {
-        following = false;
-        btnRecenter.style.display = 'block';
-    });
-
-    btnRecenter.onclick = () => {
-        following = true;
-        map.setView(userCoords, 18);
-        btnRecenter.style.display = 'none';
-    };
-
-    transportSelect.onchange = () => marker.setIcon(getIcon());
-
-    navigator.geolocation.watchPosition(updateLocation, console.error, { enableHighAccuracy: true });
-</script>
+    </script>
 </body>
 </html>

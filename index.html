@@ -27,7 +27,6 @@
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
-        /* Fundo escuro fixo para eliminar qualquer flash branco ao arrastar */
         body, html {
             width: 100%;
             height: 100%;
@@ -43,7 +42,6 @@
             background-color: #0b0f19 !important;
         }
 
-        /* Painel Superior */
         .cyber-panel {
             position: absolute;
             top: 20px;
@@ -173,6 +171,7 @@
         }
 
         #btn-start-route {
+            display: block !important;
             width: 100%;
             background: linear-gradient(135deg, #38bdf8, #0284c7);
             color: #0f172a;
@@ -256,8 +255,7 @@
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
 
     <script>
-        // --- 1. BANCO DE DADOS LOCAL (LocalStorage) ---
-        const DB_KEY = 'neomap_offline_places_v3';
+        const DB_KEY = 'neomap_offline_places_v5';
         
         function getSavedPlaces() {
             try {
@@ -285,12 +283,12 @@
             return results;
         }
 
-        // --- 2. INICIALIZAÇÃO DO MAPA OTIMIZADO ---
         const map = L.map('map', { 
             zoomControl: false,
             rotate: true,
             touchRotate: true,
-            rotateControl: false
+            rotateControl: false,
+            renderer: L.canvas() 
         }).setView([0, 0], 2);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -305,6 +303,7 @@
         let marker = null;
         let destinationCoords = null;
         let routePolyline = null;
+        let rawRouteCoords = null;
         let following = true;
         let routeActive = false;
         let currentTransport = 'foot';
@@ -328,7 +327,6 @@
             });
         }
 
-        // --- 3. ATUALIZAÇÃO SEM FORÇAR O ZOOM ---
         function updateLocation(pos) {
             userCoords = [pos.coords.latitude, pos.coords.longitude];
 
@@ -340,15 +338,20 @@
                 marker.setIcon(getUserIcon());
             }
 
-            // Acompanha a posição mas mantém livre o nível de zoom escolhido pelo usuário
             if (following) {
                 map.setView(userCoords, map.getZoom(), { animate: true });
             }
 
             if (routeActive && destinationCoords) {
-                fetchRouteGeometry(false); // Apenas atualiza a geometria sem resetar zoom
+                fetchRouteGeometry(false);
             }
         }
+
+        map.on('zoom zoomend move moveend', () => {
+            if (routePolyline && rawRouteCoords) {
+                routePolyline.redraw();
+            }
+        });
 
         map.on('dragstart zoomstart rotatestart', () => {
             following = false;
@@ -373,7 +376,6 @@
             });
         }
 
-        // --- 4. BUSCA HÍBRIDA ---
         let searchTimeout;
         searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
@@ -407,6 +409,7 @@
                             searchResults.style.display = 'none';
                             
                             routeActive = false;
+                            rawRouteCoords = null;
                             if (routePolyline) {
                                 map.removeLayer(routePolyline);
                                 routePolyline = null;
@@ -415,7 +418,7 @@
                             following = false;
                             btnRecenter.style.display = 'flex';
                             map.setView(destinationCoords, 16, { animate: true });
-                            calculateRouteInfo(); // Apenas calcula e mostra o painel com o botão "Iniciar Rota"
+                            calculateRouteInfo();
                         };
                         searchResults.appendChild(div);
                     });
@@ -449,7 +452,6 @@
             });
         });
 
-        // --- 5. PERFIS E CÁLCULO PRECISO ---
         const transportConfig = {
             foot: { osrm: 'foot', speedKmH: 4.5 },
             bike: { osrm: 'bike', speedKmH: 15.0 },
@@ -473,23 +475,21 @@
 
                     distVal.textContent = distanceKm.toFixed(1) + ' km';
                     timeVal.textContent = calculatedMinutes + ' min';
-                    routeInfoPanel.style.display = 'flex';
+                    routeInfoPanel.style.display = 'flex'; // Garante a exibição do painel e do botão internamente
                 }
             } catch (err) {
                 console.error("Erro ao calcular info da rota:", err);
             }
         }
 
-        // Botão Iniciar Rota: Desenha a linha no mapa de acordo com a categoria e centraliza no usuário
         btnStartRoute.onclick = () => {
             if (!userCoords || !destinationCoords) return;
 
             routeActive = true;
             following = true;
             btnRecenter.style.display = 'none';
-            routeInfoPanel.style.display = 'none';
-
-            map.setView(userCoords, map.getZoom(), { animate: true });
+            
+            // Mantém o painel de informações visível ou esconde conforme preferência (aqui mantemos ativo com os dados)
             fetchRouteGeometry(true);
         };
 
@@ -504,12 +504,13 @@
                 const data = await res.json();
                 if (data.routes && data.routes.length > 0) {
                     const route = data.routes[0];
-                    const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+                    rawRouteCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
 
                     if (routePolyline) {
-                        routePolyline.setLatLngs(coords);
+                        routePolyline.setLatLngs(rawRouteCoords);
+                        routePolyline.redraw();
                     } else {
-                        routePolyline = L.polyline(coords, {
+                        routePolyline = L.polyline(rawRouteCoords, {
                             color: '#38bdf8',
                             weight: 8,
                             opacity: 0.9,
@@ -524,6 +525,7 @@
 
                         distVal.textContent = distanceKm.toFixed(1) + ' km';
                         timeVal.textContent = calculatedMinutes + ' min';
+                        routeInfoPanel.style.display = 'flex';
                     }
                 }
             } catch (err) {

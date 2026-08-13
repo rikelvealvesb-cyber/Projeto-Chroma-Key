@@ -2,264 +2,1145 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chroma Key Mobile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fulion - A Jornada Azul Avançada</title>
     <style>
-        * {
-            box-sizing: border-box;
+        :root {
+            --fulion-blue: #0077ff;
+            --fulion-dark-blue: #004db3;
+            --fulion-light-blue: #e6f0ff;
+            --accent-cyan: #00d4ff;
+            --gold: #ffcc00;
+            --gold-dark: #b38f00;
+            --danger: #ff3366;
+            --success: #00cc66;
+            --bg-deep: #0a1128;
+            --card-bg: #101d42;
+            --text-light: #f0f4ff;
+            --text-muted: #8fa4c7;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-light);
             margin: 0;
-            padding: 0;
-        }
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #000;
-            font-family: Arial, sans-serif;
-        }
-        #app-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-        /* O canvas ocupa a tela inteira exibindo o resultado em tempo real */
-        #output-canvas {
+
+        .container {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            max-width: 420px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 119, 255, 0.2);
+            box-sizing: border-box;
+            min-height: 700px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            border: 2px solid rgba(0, 212, 255, 0.2);
+            overflow: hidden;
         }
-        /* Tela inicial de configuração / upload */
-        #setup-screen {
+
+        /* Barra superior de status */
+        .top-stats-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 14px;
+            border-radius: 14px;
+            margin-bottom: 14px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 10px var(--accent-cyan); }
+            50% { box-shadow: 0 0 25px var(--accent-cyan), 0 0 10px var(--gold); }
+            100% { box-shadow: 0 0 10px var(--accent-cyan); }
+        }
+
+        /* Animações de Feedback */
+        @keyframes flashCorrect {
+            0% { background-color: rgba(0, 204, 102, 0); }
+            50% { background-color: rgba(0, 204, 102, 0.25); border-color: var(--success); }
+            100% { background-color: rgba(0, 204, 102, 0); }
+        }
+
+        @keyframes flashWrong {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-8px); background-color: rgba(255, 51, 102, 0.3); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+            100% { transform: translateX(0); }
+        }
+
+        .animate-correct { animation: flashCorrect 0.5s ease; }
+        .animate-wrong { animation: flashWrong 0.4s ease; }
+
+        @keyframes levelUpPopup {
+            0% { transform: scale(0.3); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .levelup-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 17, 40, 0.92);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            text-align: center;
+            padding: 24px;
+            box-sizing: border-box;
+            animation: levelUpPopup 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        h1 {
+            color: var(--accent-cyan);
+            margin: 0 0 4px 0;
+            font-size: 26px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--fulion-blue), var(--fulion-dark-blue));
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            font-size: 17px;
+            font-weight: bold;
+            border-radius: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s ease;
+            box-shadow: 0 6px 0 #002d66;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #002d66;
+        }
+
+        /* Tela do Mapa com Trilha Realista Estilo Duolingo */
+        #map-screen {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            flex-grow: 1;
+        }
+
+        .map-container-scroll {
+            position: relative;
+            flex-grow: 1;
+            overflow-y: auto;
+            max-height: 440px;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .map-svg-canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            height: 1000px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .map-nodes-wrapper {
+            position: relative;
+            width: 100%;
+            height: 1000px;
+            z-index: 2;
+        }
+
+        .circle-node {
+            width: 82px;
+            height: 82px;
+            background: linear-gradient(135deg, var(--fulion-blue), var(--fulion-dark-blue));
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 10;
-            padding: 20px;
-            color: #fff;
-            text-align: center;
+            box-shadow: 0 6px 0 #002d66, 0 10px 15px rgba(0,0,0,0.4);
+            border: 4px solid var(--accent-cyan);
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s;
         }
-        #setup-screen h1 {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
+
+        .circle-node:active:not(.locked) {
+            transform: translate(-50%, -50%) translateY(4px);
+            box-shadow: 0 2px 0 #002d66;
         }
-        .btn-upload {
-            background: #2ecc71;
-            color: white;
-            padding: 15px 30px;
-            border-radius: 30px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            margin-bottom: 15px;
+
+        .circle-node.unlocked {
+            animation: pulseGlow 2.5s infinite;
         }
-        #bg-file-input {
-            display: none;
+
+        .circle-node.completed {
+            background: linear-gradient(135deg, #00b36b, #006633);
+            border-color: var(--success);
+            box-shadow: 0 6px 0 #00331a;
         }
-        /* Painel de calibração (ocultável após ajustes) */
-        #controls-panel {
+
+        .circle-node.locked {
+            background: linear-gradient(135deg, #333, #222);
+            border-color: #555;
+            box-shadow: 0 4px 0 #111;
+            cursor: not-allowed;
+            opacity: 0.6;
+            animation: none;
+        }
+
+        .circle-icon {
+            font-size: 26px;
+            line-height: 1;
+        }
+
+        .circle-label {
             position: absolute;
-            bottom: 20px;
+            bottom: -22px;
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--text-light);
+            white-space: nowrap;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            background: rgba(10, 17, 40, 0.85);
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        /* Tela de Atividade com Elementos Maiores */
+        #quiz-screen {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-grow: 1;
+        }
+
+        .header-quiz {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .progress-bar {
+            flex-grow: 1;
+            height: 14px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 7px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-cyan);
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px var(--accent-cyan);
+        }
+
+        .question-card {
+            background: rgba(0, 119, 255, 0.06);
+            border: 2px solid rgba(0, 212, 255, 0.25);
+            padding: 18px 16px;
+            border-radius: 18px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .question-instruction {
+            font-size: 12px;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        /* Dicionário interativo / Balão branco em cima da palavra */
+        .interactive-word {
+            display: inline-block;
+            border-bottom: 3px dashed var(--accent-cyan);
+            cursor: pointer;
+            padding: 0 4px;
+            color: var(--accent-cyan);
+            position: relative;
+        }
+
+        .word-tooltip {
+            position: absolute;
+            bottom: 130%;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.6);
-            padding: 10px 15px;
+            background: #ffffff;
+            color: #0a1128;
+            padding: 8px 14px;
             border-radius: 10px;
-            z-index: 5;
-            display: flex;
-            gap: 15px;
-            color: white;
-            font-size: 0.8rem;
-            backdrop-filter: blur(5px);
+            font-size: 15px;
+            font-weight: bold;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+            white-space: nowrap;
+            z-index: 50;
+            display: none;
+            animation: tooltipPop 0.2s ease;
         }
-        .control-group {
+
+        .word-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -6px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: #ffffff transparent transparent transparent;
+        }
+
+        @keyframes tooltipPop {
+            0% { transform: translateX(-50%) scale(0.8); opacity: 0; }
+            100% { transform: translateX(-50%) scale(1); opacity: 1; }
+        }
+
+        /* Tela de Ensino Prévio Ampliada */
+        .teach-card {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px dashed var(--accent-cyan);
+            padding: 16px;
+            border-radius: 18px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .teach-title {
+            color: var(--gold);
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .teach-content {
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            line-height: 1.4;
+        }
+
+        /* Opções maiores e mais fáceis de clicar */
+        .options-container {
             display: flex;
             flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            padding: 16px 18px;
+            text-align: left;
+            border-radius: 16px;
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 56px;
+            display: flex;
             align-items: center;
         }
-        /* Elementos de vídeo e imagem de fundo ocultos usados no processamento */
-        video, img#bg-image {
+
+        .option-btn:hover, .option-btn:active {
+            background: rgba(0, 119, 255, 0.2);
+            border-color: var(--accent-cyan);
+        }
+
+        .option-btn.selected {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 119, 255, 0.35);
+            box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Estilo para Escrever Resposta */
+        .input-answer-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .text-input-field {
+            background: rgba(255, 255, 255, 0.07);
+            border: 2px solid rgba(0, 212, 255, 0.4);
+            padding: 18px;
+            border-radius: 16px;
+            color: white;
+            font-size: 18px;
+            outline: none;
+            text-align: center;
+            font-weight: bold;
+            min-height: 28px;
+        }
+
+        .text-input-field:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Ligar Palavras (Inglês esquerda, Português direita) com botões maiores */
+        .match-columns-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .match-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .match-column-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--accent-cyan);
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .match-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            padding: 16px 10px;
+            border-radius: 14px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .match-item.active {
+            border-color: var(--gold);
+            background: rgba(255, 204, 0, 0.25);
+            box-shadow: 0 0 12px rgba(255, 204, 0, 0.4);
+        }
+
+        .match-item.matched {
+            opacity: 0.25;
+            pointer-events: none;
+            border-color: var(--success);
+            background: rgba(0, 204, 102, 0.15);
+        }
+
+        .feedback-box {
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            font-weight: bold;
             display: none;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        .feedback-box.correct {
+            background: rgba(0, 204, 102, 0.2);
+            border: 2px solid var(--success);
+            color: #66ffb2;
+        }
+
+        .feedback-box.wrong {
+            background: rgba(255, 51, 102, 0.2);
+            border: 2px solid var(--danger);
+            color: #ff99b3;
+        }
+
+        /* Tela de Estatísticas Finais */
+        #stats-screen {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .stats-box {
+            background: rgba(0, 119, 255, 0.08);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 18px;
+            padding: 20px;
+            margin: 14px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 8px;
         }
     </style>
 </head>
 <body>
 
-<div id="app-container">
-    <!-- Tela de boas-vindas para carregar a imagem de fundo -->
-    <div id="setup-screen">
-        <h1>Chroma Key ao Vivo</h1>
-        <p style="margin-bottom: 20px; font-size: 0.9rem; color: #ccc;">Escolha uma imagem de fundo da sua galeria para iniciar.</p>
-        <label class="btn-upload">
-            Escolher Imagem de Fundo
-            <input type="file" id="bg-file-input" accept="image/*">
-        </label>
-    </div>
-
-    <!-- Canvas principal onde a mágica acontece -->
-    <canvas id="output-canvas"></canvas>
-
-    <!-- Controles de calibração (podem ser ocultados com display: none após ajustes) -->
-    <div id="controls-panel">
-        <div class="control-group">
-            <label>Tolerância (Threshold)</label>
-            <input type="range" id="threshold" min="0" max="100" value="40">
+    <div class="container" id="main-container">
+        <!-- Barra Superior -->
+        <div class="top-stats-bar">
+            <div class="stat-item" title="Energia Infinita">
+                ⚡ <span style="color: var(--accent-cyan); font-weight: bold;">∞</span> (Ilimitada)
+            </div>
+            <div class="stat-item" title="Dias seguidos de ofensiva">
+                🔥 <span id="streak-counter">0</span> dias
+            </div>
         </div>
-        <div class="control-group">
-            <label>Suavidade (Smoothing)</label>
-            <input type="range" id="smooth" min="0" max="50" value="10">
-        </div>
-    </div>
 
-    <!-- Elementos ocultos -->
-    <video id="webcam-video" autoplay playsinline muted></video>
-    <img id="bg-image" alt="Fundo Personalizado">
-    <!-- Canvas de suporte para processar os frames -->
-    <canvas id="processing-canvas" style="display:none;"></canvas>
-</div>
-
-<script>
-    const setupScreen = document.getElementById('setup-screen');
-    const bgFileInput = document.getElementById('bg-file-input');
-    const bgImage = document.getElementById('bg-image');
-    const video = document.getElementById('webcam-video');
-    const outputCanvas = document.getElementById('output-canvas');
-    const ctx = outputCanvas.getContext('2d', { willReadFrequently: true });
-    
-    const processingCanvas = document.getElementById('processing-canvas');
-    const pCtx = processingCanvas.getContext('2d', { willReadFrequently: true });
-
-    const thresholdRange = document.getElementById('threshold');
-    const smoothRange = document.getElementById('smooth');
-
-    let isRunning = false;
-
-    // 1. Passo: Usuário escolhe a imagem da galeria
-    bgFileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                bgImage.src = event.target.result;
-                bgImage.onload = () => {
-                    // Esconde a tela de setup e inicia a câmera
-                    setupScreen.style.display = 'none';
-                    initCamera();
-                }
-            }
-            reader.readAsDataURL(file);
-        }
-    });
-
-    // 2. Passo: Abertura da câmera traseira
-    async function initCamera() {
-        try {
-            const constraints = {
-                video: {
-                    facingMode: { exact: "environment" }, // Tenta usar a câmera traseira como padrão
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                },
-                audio: false
-            };
+        <!-- Tela do Mapa Realista (Trilha em Zigue-Zague com Linhas SVG) -->
+        <div id="map-screen">
+            <div>
+                <h1>Fulion</h1>
+                <p class="subtitle">Trilha de Aprendizado (10 Checkpoints • 20 Lições)</p>
+            </div>
             
-            let stream;
-            try {
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-            } catch (err) {
-                // Fallback caso o celular não suporte "exact: environment"
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+            <div class="map-container-scroll" id="map-scroll-area">
+                <svg class="map-svg-canvas" id="map-svg-canvas">
+                    <!-- Linhas geradas via script -->
+                </svg>
+                <div class="map-nodes-wrapper" id="map-nodes-wrapper">
+                    <!-- Checkpoints posicionados via script -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tela de Atividades Dinâmicas com Elementos Ampliados -->
+        <div id="quiz-screen">
+            <div>
+                <div class="header-quiz">
+                    <button onclick="backToMap()" style="background:none; border:none; font-size: 22px; cursor:pointer; color:var(--text-muted); padding: 4px 8px;">✕</button>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress"></div>
+                    </div>
+                    <span id="checkpoint-indicator" style="font-weight: bold; font-size: 13px; color: var(--gold);">Fase</span>
+                </div>
+
+                <div id="teach-container"></div>
+
+                <div class="question-card" id="question-card-box">
+                    <div class="question-instruction" id="question-instruction">Instrução</div>
+                    <div class="question-text" id="question-text">Carregando...</div>
+                </div>
+
+                <div id="dynamic-content-container"></div>
+
+                <div id="feedback-box" class="feedback-box"></div>
+            </div>
+
+            <button class="btn" id="action-btn" onclick="handleAction()">VERIFICAR RESPOSTA</button>
+        </div>
+
+        <!-- Tela de Estatísticas Finais -->
+        <div id="stats-screen">
+            <div>
+                <h1 style="color: var(--success);">LIÇÃO CONCLUÍDA! 🏆</h1>
+                <p class="subtitle">Resultados detalhados do seu desempenho no checkpoint:</p>
+                
+                <div class="stats-box">
+                    <div class="stat-row">
+                        <span>Perguntas Acertadas:</span>
+                        <strong id="stat-correct" style="color: var(--success);">0</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Perguntas Erradas:</span>
+                        <strong id="stat-wrong" style="color: var(--danger);">0</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Porcentagem de Acerto:</span>
+                        <strong id="stat-percentage" style="color: var(--accent-cyan);">0%</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Tempo Gasto:</span>
+                        <strong id="stat-time" style="color: var(--gold);">0s</strong>
+                    </div>
+                    <div class="stat-row" style="border:none;">
+                        <span>Status:</span>
+                        <strong style="color: var(--success);">Progresso Salvo!</strong>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="finishAndReturnToMap()">RETORNAR AO MAPA</button>
+        </div>
+    </div>
+
+    <script>
+        function triggerVibration(pattern) {
+            if ("vibrate" in navigator) {
+                navigator.vibrate(pattern);
             }
-
-            video.srcObject = stream;
-            await video.play();
-
-            // Configura os tamanhos dos canvases com base na resolução real do vídeo
-            outputCanvas.width = video.videoWidth || 1280;
-            outputCanvas.height = video.videoHeight || 720;
-            processingCanvas.width = outputCanvas.width;
-            processingCanvas.height = outputCanvas.height;
-
-            isRunning = true;
-            requestAnimationFrame(processFrame);
-        } catch (error) {
-            alert("Erro ao acessar a câmera. Verifique as permissões do navegador.");
-            console.error(error);
-            setupScreen.style.display = 'flex';
         }
-    }
 
-    // 3. Processamento em Tempo Real (Chroma Key)
-    function processFrame() {
-        if (!isRunning) return;
+        const vocabPool = [
+            { en: "Hello", pt: "Olá" },
+            { en: "Good morning", pt: "Bom dia" },
+            { en: "Goodbye", pt: "Adeus" },
+            { en: "Book", pt: "Livro" },
+            { en: "Pen", pt: "Caneta" },
+            { en: "Water", pt: "Água" },
+            { en: "Table", pt: "Mesa" },
+            { en: "House", pt: "Casa" },
+            { en: "Car", pt: "Carro" },
+            { en: "Apple", pt: "Maçã" },
+            { en: "Dog", pt: "Cachorro" },
+            { en: "Cat", pt: "Gato" },
+            { en: "Friend", pt: "Amigo" },
+            { en: "School", pt: "Escola" },
+            { en: "Computer", pt: "Computador" },
+            { en: "Phone", pt: "Telefone" },
+            { en: "Milk", pt: "Leite" },
+            { en: "Door", pt: "Porta" },
+            { en: "Window", pt: "Janela" },
+            { en: "Key", pt: "Chave" }
+        ];
 
-        const width = outputCanvas.width;
-        const height = outputCanvas.height;
+        function generateCheckpointData() {
+            const data = [];
+            for (let c = 1; c <= 10; c++) {
+                const lessonList = [];
+                const startIdx = (c - 1) * 2 % 12;
+                const subset = vocabPool.slice(startIdx, startIdx + 8);
 
-        // Desenha a imagem de fundo personalizada cobrindo todo o canvas
-        ctx.drawImage(bgImage, 0, 0, width, height);
-        const bgData = ctx.getImageData(0, 0, width, height);
-
-        // Desenha o frame atual da câmera no canvas de processamento
-        pCtx.drawImage(video, 0, 0, width, height);
-        const webcamData = pCtx.getImageData(0, 0, width, height);
-
-        const srcPixels = webcamData.data;
-        const destPixels = bgData.data;
-
-        const threshold = parseInt(thresholdRange.value) * 2.5; // Ajuste de escala
-        const smooth = parseInt(smoothRange.value);
-
-        // Loop pixel por pixel para remover o fundo verde (Chroma Key)
-        for (let i = 0; i < srcPixels.length; i += 4) {
-            let r = srcPixels[i];
-            let g = srcPixels[i + 1];
-            let b = srcPixels[i + 2];
-
-            // Identifica a predominância do verde (Fundo Chroma Key)
-            // Compara o canal verde com a média dos canais vermelho e azul
-            let maxRb = Math.max(r, b);
-            let diff = g - maxRb;
-
-            if (diff > threshold) {
-                // Se for verde, calcula a suavidade (edge spill/transparência gradual)
-                let alphaFactor = 0;
-                if (smooth > 0) {
-                    let edgeDiff = diff - threshold;
-                    alphaFactor = Math.min(1, edgeDiff / smooth);
+                for (let i = 0; i < 20; i++) {
+                    const item = subset[i % subset.length];
+                    
+                    if (i === 0) {
+                        lessonList.push({
+                            type: "teach",
+                            teachTitle: `Checkpoint ${c} - Novo Conceito`,
+                            teachText: `Aprenda: <b>${item.en}</b> significa <b>${item.pt}</b> em português.`,
+                            instruction: "Fixação Inicial",
+                            question: `Qual é a tradução em português para a palavra <span class="interactive-word" onclick="toggleTooltip(event, '${item.pt}')">${item.en}<span class="word-tooltip">${item.pt}</span></span>?`,
+                            options: [item.pt, subset[(i+1)%subset.length].pt, subset[(i+2)%subset.length].pt, subset[(i+3)%subset.length].pt].sort(() => Math.random() - 0.5),
+                            correctOptionText: item.pt
+                        });
+                    } else if (i % 5 === 4) {
+                        lessonList.push({
+                            type: "write",
+                            instruction: "Escreva em Inglês",
+                            question: `Digite a tradução correta para o inglês da palavra: <b>${item.pt}</b>`,
+                            correctAnswer: item.en.toLowerCase().trim()
+                        });
+                    } else if (i % 5 === 2) {
+                        const pair1 = subset[0];
+                        const pair2 = subset[1];
+                        const pair3 = subset[2];
+                        lessonList.push({
+                            type: "match",
+                            teachTitle: "Associação de Pares",
+                            teachText: "Conecte as palavras em inglês da esquerda com suas traduções à direita.",
+                            instruction: "Conecte os Pares Corretos",
+                            pairs: [
+                                { en: pair1.en, pt: pair1.pt },
+                                { en: pair2.en, pt: pair2.pt },
+                                { en: pair3.en, pt: pair3.pt }
+                            ]
+                        });
+                    } else {
+                        const wrong1 = subset[(i + 1) % subset.length].pt;
+                        const wrong2 = subset[(i + 2) % subset.length].pt;
+                        const wrong3 = subset[(i + 3) % subset.length].pt;
+                        const opts = [item.pt, wrong1, wrong2, wrong3].sort(() => Math.random() - 0.5);
+                        
+                        lessonList.push({
+                            type: "multiple",
+                            instruction: "Tradução de Vocabulário",
+                            question: `O que significa em português a palavra <span class="interactive-word" onclick="toggleTooltip(event, '${item.pt}')">${item.en}<span class="word-tooltip">${item.pt}</span></span>?`,
+                            options: opts,
+                            correctOptionText: item.pt
+                        });
+                    }
                 }
+                data.push(lessonList);
+            }
+            return data;
+        }
 
-                if (alphaFactor < 1) {
-                    // Mantém uma transição suave nas bordas para evitar cortes secos
-                    srcPixels[i + 3] = alphaFactor * 255; 
+        const checkpointData = generateCheckpointData();
+        const totalStages = 10;
+
+        let userProgress = parseInt(localStorage.getItem('fulion_saved_progress')) || 1;
+        let streak = parseInt(localStorage.getItem('fulion_saved_streak')) || 0;
+        let lastStreakDate = localStorage.getItem('fulion_saved_streak_date') || "";
+        const todayStr = new Date().toDateString();
+
+        let currentStageIndex = 0;
+        let currentQuestionIndex = 0;
+        let sessionQuestions = [];
+        let selectedOption = null;
+        let isAnswerChecked = false;
+
+        let lessonCorrectCount = 0;
+        let lessonWrongCount = 0;
+        let lessonStartTime = 0;
+
+        let selectedEn = null;
+        let selectedPt = null;
+        let matchedPairsCount = 0;
+
+        const mainContainer = document.getElementById("main-container");
+        const mapScreen = document.getElementById("map-screen");
+        const quizScreen = document.getElementById("quiz-screen");
+        const statsScreen = document.getElementById("stats-screen");
+        const mapNodesWrapper = document.getElementById("map-nodes-wrapper");
+        const mapSvgCanvas = document.getElementById("map-svg-canvas");
+        const teachContainer = document.getElementById("teach-container");
+        const questionCardBox = document.getElementById("question-card-box");
+        const questionInstruction = document.getElementById("question-instruction");
+        const questionText = document.getElementById("question-text");
+        const dynamicContentContainer = document.getElementById("dynamic-content-container");
+        const progressFill = document.getElementById("progress");
+        const actionBtn = document.getElementById("action-btn");
+        const feedbackBox = document.getElementById("feedback-box");
+        const streakCounter = document.getElementById("streak-counter");
+
+        function saveUserData() {
+            localStorage.setItem('fulion_saved_progress', userProgress);
+            localStorage.setItem('fulion_saved_streak', streak);
+            localStorage.setItem('fulion_saved_streak_date', lastStreakDate);
+        }
+
+        function updateTopBar() {
+            streakCounter.innerText = streak;
+            saveUserData();
+        }
+
+        function toggleTooltip(event, ptMeaning) {
+            event.stopPropagation();
+            document.querySelectorAll('.word-tooltip').forEach(t => t.style.display = 'none');
+            const tooltip = event.currentTarget.querySelector('.word-tooltip');
+            if (tooltip) {
+                tooltip.style.display = (tooltip.style.display === 'block') ? 'none' : 'block';
+            }
+        }
+
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.word-tooltip').forEach(t => t.style.display = 'none');
+        });
+
+        const checkpointCoordinates = [
+            { x: 210, y: 920 },
+            { x: 120, y: 810 },
+            { x: 280, y: 700 },
+            { x: 210, y: 590 },
+            { x: 110, y: 480 },
+            { x: 250, y: 370 },
+            { x: 310, y: 260 },
+            { x: 180, y: 170 },
+            { x: 110, y: 90  },
+            { x: 230, y: 30  }
+        ];
+
+        function renderMap() {
+            updateTopBar();
+            mapNodesWrapper.innerHTML = "";
+            mapSvgCanvas.innerHTML = "";
+
+            let svgHtml = '';
+            for (let i = 0; i < checkpointCoordinates.length - 1; i++) {
+                const p1 = checkpointCoordinates[i];
+                const p2 = checkpointCoordinates[i+1];
+                let strokeColor = (i + 1 < userProgress) ? "var(--success)" : "rgba(255, 255, 255, 0.2)";
+                svgHtml += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="${strokeColor}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(i + 1 >= userProgress) ? '6,6' : '0'}" />`;
+            }
+            mapSvgCanvas.innerHTML = svgHtml;
+
+            checkpointCoordinates.forEach((coord, index) => {
+                const i = index + 1;
+                const circle = document.createElement("div");
+                circle.classList.add("circle-node");
+                circle.style.left = `${coord.x}px`;
+                circle.style.top = `${coord.y}px`;
+
+                let iconSymbol = "";
+                if (i < userProgress) {
+                    circle.classList.add("completed");
+                    iconSymbol = "✓";
+                    circle.innerHTML = `<span class="circle-icon">${iconSymbol}</span><span class="circle-label">Checkpoint ${i}</span>`;
+                    circle.onclick = () => { triggerVibration(30); startStage(i - 1); };
+                } else if (i === userProgress) {
+                    circle.classList.add("unlocked");
+                    iconSymbol = "⭐";
+                    circle.innerHTML = `<span class="circle-icon">${iconSymbol}</span><span class="circle-label">Checkpoint ${i}</span>`;
+                    circle.onclick = () => { triggerVibration(30); startStage(i - 1); };
                 } else {
-                    // Remove totalmente o pixel verde substituindo pelo fundo
-                    srcPixels[i] = destPixels[i];
-                    srcPixels[i + 1] = destPixels[i + 1];
-                    srcPixels[i + 2] = destPixels[i + 2];
-                    srcPixels[i + 3] = 255;
+                    circle.classList.add("locked");
+                    iconSymbol = "🔒";
+                    circle.innerHTML = `<span class="circle-icon">${iconSymbol}</span><span class="circle-label">Checkpoint ${i}</span>`;
+                }
+
+                mapNodesWrapper.appendChild(circle);
+            });
+
+            setTimeout(() => {
+                const scrollArea = document.getElementById("map-scroll-area");
+                const activeCoord = checkpointCoordinates[userProgress - 1] || checkpointCoordinates[0];
+                scrollArea.scrollTop = activeCoord.y - 200;
+            }, 100);
+        }
+
+        function startStage(stageIdx) {
+            const checkpointNum = stageIdx + 1;
+            if (checkpointNum > userProgress) return;
+
+            currentStageIndex = stageIdx;
+            currentQuestionIndex = 0;
+            sessionQuestions = checkpointData[stageIdx];
+            
+            lessonCorrectCount = 0;
+            lessonWrongCount = 0;
+            lessonStartTime = Date.now();
+
+            mapScreen.style.display = "none";
+            statsScreen.style.display = "none";
+            quizScreen.style.display = "flex";
+            loadQuestion();
+        }
+
+        function backToMap() {
+            triggerVibration(20);
+            quizScreen.style.display = "none";
+            mapScreen.style.display = "flex";
+            renderMap();
+        }
+
+        function loadQuestion() {
+            isAnswerChecked = false;
+            selectedOption = null;
+            feedbackBox.style.display = "none";
+            actionBtn.innerText = "VERIFICAR RESPOSTA";
+            actionBtn.style.display = "block";
+
+            const currentQ = sessionQuestions[currentQuestionIndex];
+
+            if (currentQ.teachText) {
+                teachContainer.style.display = "block";
+                teachContainer.innerHTML = `
+                    <div class="teach-card">
+                        <div class="teach-title">${currentQ.teachTitle}</div>
+                        <div class="teach-content">${currentQ.teachText}</div>
+                    </div>
+                `;
+            } else {
+                teachContainer.style.display = "none";
+            }
+
+            if (currentQ.type === "match") {
+                questionCardBox.style.display = "none";
+            } else {
+                questionCardBox.style.display = "block";
+                questionInstruction.innerText = currentQ.instruction;
+                questionText.innerHTML = currentQ.question;
+            }
+
+            const progressPercent = (currentQuestionIndex / sessionQuestions.length) * 100;
+            progressFill.style.width = `${progressPercent}%`;
+            document.getElementById("checkpoint-indicator").innerText = `Checkpoint ${currentStageIndex + 1} • Lição ${currentQuestionIndex + 1}/20`;
+
+            dynamicContentContainer.innerHTML = "";
+
+            if (currentQ.type === "multiple" || currentQ.type === "teach") {
+                const optionsDiv = document.createElement("div");
+                optionsDiv.classList.add("options-container");
+
+                currentQ.options.forEach((opt) => {
+                    const btn = document.createElement("button");
+                    btn.classList.add("option-btn");
+                    btn.innerText = opt;
+                    btn.onclick = () => {
+                        triggerVibration(20);
+                        selectMultipleOption(opt, btn);
+                    };
+                    optionsDiv.appendChild(btn);
+                });
+                dynamicContentContainer.appendChild(optionsDiv);
+            } 
+            else if (currentQ.type === "write") {
+                const writeDiv = document.createElement("div");
+                writeDiv.classList.add("input-answer-container");
+                writeDiv.innerHTML = `
+                    <input type="text" id="user-written-input" class="text-input-field" placeholder="Digite aqui em inglês..." autocomplete="off">
+                `;
+                dynamicContentContainer.appendChild(writeDiv);
+                setTimeout(() => {
+                    const inp = document.getElementById("user-written-input");
+                    if(inp) inp.focus();
+                }, 100);
+            }
+            else if (currentQ.type === "match") {
+                matchedPairsCount = 0;
+                selectedEn = null;
+                selectedPt = null;
+
+                const matchWrapper = document.createElement("div");
+                matchWrapper.classList.add("match-columns-container");
+
+                let enList = currentQ.pairs.map(p => p.en).sort(() => Math.random() - 0.5);
+                let ptList = currentQ.pairs.map(p => p.pt).sort(() => Math.random() - 0.5);
+
+                let enColHtml = `<div class="match-column"><div class="match-column-title">Inglês</div>`;
+                enList.forEach(en => {
+                    enColHtml += `<div class="match-item" onclick="selectMatchWord(this, 'en', '${en}')">${en}</div>`;
+                });
+                enColHtml += `</div>`;
+
+                let ptColHtml = `<div class="match-column"><div class="match-column-title">Português</div>`;
+                ptList.forEach(pt => {
+                    ptColHtml += `<div class="match-item" onclick="selectMatchWord(this, 'pt', '${pt}')">${pt}</div>`;
+                });
+                ptColHtml += `</div>`;
+
+                matchWrapper.innerHTML = enColHtml + ptColHtml;
+                dynamicContentContainer.appendChild(matchWrapper);
+                actionBtn.style.display = "none";
+            }
+        }
+
+        function selectMultipleOption(optionText, element) {
+            if (isAnswerChecked) return;
+            document.querySelectorAll(".option-btn").forEach(b => b.classList.remove("selected"));
+            element.classList.add("selected");
+            selectedOption = optionText;
+        }
+
+        function selectMatchWord(element, type, value) {
+            if (element.classList.contains('matched')) return;
+            triggerVibration(25);
+
+            const currentQ = sessionQuestions[currentQuestionIndex];
+
+            if (type === 'en') {
+                document.querySelectorAll('.match-column')[0].querySelectorAll('.match-item').forEach(el => el.classList.remove('active'));
+                element.classList.add('active');
+                selectedEn = value;
+            } else {
+                document.querySelectorAll('.match-column')[1].querySelectorAll('.match-item').forEach(el => el.classList.remove('active'));
+                element.classList.add('active');
+                selectedPt = value;
+            }
+
+            if (selectedEn && selectedPt) {
+                const foundPair = currentQ.pairs.find(p => p.en === selectedEn && p.pt === selectedPt);
+                
+                if (foundPair) {
+                    triggerVibration([40, 40]);
+                    matchedPairsCount++;
+                    
+                    document.querySelectorAll('.match-item').forEach(el => {
+                        if (el.innerText === selectedEn || el.innerText === selectedPt) {
+                            el.classList.add('matched');
+                            el.classList.remove('active');
+                        }
+                    });
+                    selectedEn = null;
+                    selectedPt = null;
+
+                    if (matchedPairsCount === currentQ.pairs.length) {
+                        lessonCorrectCount++;
+                        feedbackBox.style.display = "block";
+                        feedbackBox.innerText = "Excelente! Pares conectados com sucesso. 🌟";
+                        feedbackBox.className = "feedback-box correct";
+                        
+                        setTimeout(() => {
+                            nextStep();
+                        }, 1200);
+                    }
+                } else {
+                    triggerVibration(70);
+                    lessonWrongCount++;
+                    feedbackBox.style.display = "block";
+                    feedbackBox.innerText = "Combinação incorreta. Tente novamente.";
+                    feedbackBox.className = "feedback-box wrong";
+                    
+                    setTimeout(() => {
+                        feedbackBox.style.display = "none";
+                        document.querySelectorAll('.match-item').forEach(el => el.classList.remove('active'));
+                        selectedEn = null;
+                        selectedPt = null;
+                    }, 1000);
                 }
             }
         }
 
-        // Desenha o resultado processado da câmera (com o recorte aplicado) por cima do fundo
-        pCtx.putImageData(webcamData, 0, 0);
-        ctx.drawImage(processingCanvas, 0, 0);
+        function handleAction() {
+            const currentQ = sessionQuestions[currentQuestionIndex];
+            if (currentQ.type === "match") return;
 
-        requestAnimationFrame(processFrame);
-    }
-</script>
+            let isCorrect = false;
 
+            if (currentQ.type === "write") {
+                const inputVal = document.getElementById("user-written-input").value.toLowerCase().trim();
+                if (!inputVal) {
+                    alert("Digite uma resposta antes de continuar.");
+                    return;
+                }
+                isCorrect = (inputVal === currentQ.correctAnswer);
+            } else {
+                if (selectedOption === null && !isAnswerChecked) {
+                    alert("Selecione uma opção de resposta.");
+                    return;
+                }
+                isCorrect = (selectedOption === currentQ.correctOptionText);
+            }
+
+            if (!isAnswerChecked) {
+                isAnswerChecked = true;
+                feedbackBox.style.display = "block";
+
+                if (isCorrect) {
+                    triggerVibration([50, 50, 50]);
+                    lessonCorrectCount++;
+                    feedbackBox.innerText = "Incrível! Resposta correta. 🚀";
+                    feedbackBox.className = "feedback-box correct";
+                    mainContainer.classList.add("animate-correct");
+                    setTimeout(() => mainContainer.classList.remove("animate-correct"), 500);
+                } else {
+                    triggerVibration(100);
+                    lessonWrongCount++;
+                    const rightAns = currentQ.correctAnswer || currentQ.correctOptionText;
+                    feedbackBox.innerText = `Incorreto. A resposta certa era: ${rightAns}`;
+                    feedbackBox.className = "feedback-box wrong";
+                    mainContainer.classList.add("animate-wrong");
+                    setTimeout(() => mainContainer.classList.remove("animate-wrong"), 400);
+                }
+
+                actionBtn.innerText = "CONTINUAR JORNADA";
+            } else {
+                triggerVibration(20);
+                nextStep();
+            }
+        }
+
+        function nextStep() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < sessionQuestions.length) {
+                loadQuestion();
+            } else {
+                const totalQ = lessonCorrectCount + lessonWrongCount;
+                const percentage = totalQ > 0 ? Math.round((lessonCorrectCount / totalQ) * 100) : 100;
+                const timeSpentSec = Math.round((Date.now() - lessonStartTime) / 1000);
+
+                if (lastStreakDate !== todayStr) {
+                    streak++;
+                    lastStreakDate = todayStr;
+                }
+
+                let unlockedNewLevel = false;
+                if (currentStageIndex + 1 >= userProgress && userProgress < totalStages) {
+                    userProgress = currentStageIndex + 2;
+                    unlockedNewLevel = true;
+                }
+
+                saveUserData();
+
+                if (unlockedNewLevel) {
+                    showLevelUpAnimation(currentStageIndex + 1);
+                } else {
+                    showStatsScreen(percentage, timeSpentSec);
+                }
+            }
+        }
+
+        function showLevelUpAnimation(completedLevel) {
+            triggerVibration([100, 50, 100, 50, 200]);
+            const overlay = document.createElement("div");
+            overlay.classList.add("levelup-overlay");
+            overlay.innerHTML = `
+                <div style="font-size: 60px; margin-bottom: 12px;">🎉</div>
+                <h1 style="color: var(--gold); margin-bottom: 12px;">CHECKPOINT ${completedLevel} CONCLUÍDO!</h1>
+                <p class="subtitle" style="font-size: 16px; margin-bottom: 24px;">Você dominou todas as 20 lições e desbloqueou o próximo nível da sua jornada!</p>
+                <button class="btn" id="overlay-continue-btn">VER ESTATÍSTICAS</button>
+            `;
+            mainContainer.appendChild(overlay);
+
+            document.getElementById("overlay-continue-btn").onclick = () => {
+                overlay.remove();
+                const totalQ = lessonCorrectCount + lessonWrongCount;
+                const percentage = totalQ > 0 ? Math.round((lessonCorrectCount / totalQ) * 100) : 100;
+                const timeSpentSec = Math.round((Date.now() - lessonStartTime) / 1000);
+                showStatsScreen(percentage, timeSpentSec);
+            };
+        }
+
+        function showStatsScreen(percentage, timeSpentSec) {
+            quizScreen.style.display = "none";
+            statsScreen.style.display = "flex";
+
+            document.getElementById("stat-correct").innerText = lessonCorrectCount;
+            document.getElementById("stat-wrong").innerText = lessonWrongCount;
+            document.getElementById("stat-percentage").innerText = `${percentage}%`;
+            document.getElementById("stat-time").innerText = `${timeSpentSec}s`;
+        }
+
+        function finishAndReturnToMap() {
+            statsScreen.style.display = "none";
+            mapScreen.style.display = "flex";
+            renderMap();
+        }
+
+        renderMap();
+    </script>
 </body>
 </html>

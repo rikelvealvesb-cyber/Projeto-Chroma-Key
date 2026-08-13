@@ -2,126 +2,88 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Mapa Personalizado</title>
-    
-    <!-- Importando o Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-
+    <title>NeoMap Ultra</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body, html {
-            width: 100%;
-            height: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121212;
-            color: #ffffff;
-        }
-
-        /* Container do Mapa ocupando a tela toda */
-        #map {
-            width: 100%;
-            height: 100vh;
-            background-color: #1a1a1a;
-        }
-
-        /* Estilo personalizado para o painel flutuante */
-        .map-overlay {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: rgba(18, 18, 18, 0.85);
-            backdrop-filter: blur(10px);
-            padding: 15px 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-        }
-
-        .map-overlay h1 {
-            font-size: 1.2rem;
-            margin-bottom: 5px;
-            color: #00ffcc;
-        }
-
-        .map-overlay p {
-            font-size: 0.85rem;
-            color: #aaaaaa;
-        }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; }
+        #map { height: 100vh; }
+        
+        .controls { position: absolute; top: 20px; left: 20px; z-index: 1000; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 280px; }
+        select, input { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; }
+        
+        #btn-recenter { display: none; position: absolute; bottom: 30px; right: 30px; z-index: 1000; padding: 12px; background: #007bff; color: white; border: none; border-radius: 50%; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <!-- Painel de Design Único -->
-    <div class="map-overlay">
-        <h1>Meu NeoMap</h1>
-        <p>Explorando com estilo próprio</p>
-    </div>
+<div class="controls">
+    <input type="text" placeholder="Para onde vamos?">
+    <select id="transport">
+        <option value="pedestrian">🚶 A pé</option>
+        <option value="bike">🚲 Bike</option>
+        <option value="motorcycle">🏍️ Moto</option>
+        <option value="car">🚗 Carro</option>
+    </select>
+</div>
 
-    <!-- Elemento onde o mapa será renderizado -->
-    <div id="map"></div>
+<button id="btn-recenter">📍</button>
+<div id="map"></div>
 
-    <!-- Importando o Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
-    <script>
-    // 1. Inicializando o mapa
-    const map = L.map('map', { zoomControl: false }).setView([0, 0], 2);
-
-    // 2. Adicionando o design escuro
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap & CARTO',
-        maxZoom: 20
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const map = L.map('map').setView([-23.5505, -46.6333], 18); // Zoom bem próximo (18)
+    
+    // Mapa claro e minimalista (CartoDB Positron)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap & CARTO'
     }).addTo(map);
 
-    // 3. Marcador personalizado
-    const customIcon = L.divIcon({
-        className: 'custom-marker',
-        html: '<div style="background-color: #00ffcc; width: 16px; height: 16px; border-radius: 50%; box-shadow: 0 0 15px #00ffcc; border: 2px solid #fff;"></div>',
-        iconSize: [16, 16]
-    });
+    let marker, userCoords;
+    let following = true;
 
-    let marker;
+    const btnRecenter = document.getElementById('btn-recenter');
+    const transportSelect = document.getElementById('transport');
 
-    // 4. Função para atualizar localização em tempo real
-    function updateLocation(position) {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        const accuracy = position.coords.accuracy;
+    // Função para atualizar o ícone baseado no transporte
+    function getIcon() {
+        const emoji = { pedestrian: '🚶', bike: '🚲', motorcycle: '🏍️', car: '🚗' };
+        return L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="font-size: 24px;">${emoji[transportSelect.value]}</div>`,
+            iconSize: [30, 30]
+        });
+    }
 
-        // Centraliza o mapa na posição do usuário com zoom aproximado (16)
-        map.setView([lat, lng], 16);
-
-        // Remove o marcador antigo se existir
-        if (marker) {
-            map.removeLayer(marker);
+    function updateLocation(pos) {
+        userCoords = [pos.coords.latitude, pos.coords.longitude];
+        
+        if (!marker) {
+            marker = L.marker(userCoords, { icon: getIcon() }).addTo(map);
+        } else {
+            marker.setLatLng(userCoords);
+            marker.setIcon(getIcon());
         }
 
-        // Adiciona um novo marcador
-        marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
-        marker.bindPopup("Você está aqui! (Precisão: " + Math.round(accuracy) + "m)").openPopup();
+        if (following) {
+            map.setView(userCoords, 18);
+        }
     }
 
-    // 5. Verifica se o navegador suporta geolocalização
-    if (navigator.geolocation) {
-        // watchPosition monitora mudanças em tempo real
-        navigator.geolocation.watchPosition(updateLocation, (err) => {
-            console.error("Erro ao obter localização: " + err.message);
-        }, {
-            enableHighAccuracy: true, // Tenta usar GPS para maior precisão
-            timeout: 5000,
-            maximumAge: 0
-        });
-    } else {
-        alert("Geolocalização não suportada pelo seu navegador.");
-    }
+    // Detectar quando o usuário mexe no mapa
+    map.on('dragstart', () => {
+        following = false;
+        btnRecenter.style.display = 'block';
+    });
+
+    btnRecenter.onclick = () => {
+        following = true;
+        map.setView(userCoords, 18);
+        btnRecenter.style.display = 'none';
+    };
+
+    transportSelect.onchange = () => marker.setIcon(getIcon());
+
+    navigator.geolocation.watchPosition(updateLocation, console.error, { enableHighAccuracy: true });
 </script>
-
 </body>
 </html>

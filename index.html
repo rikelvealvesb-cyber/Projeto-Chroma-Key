@@ -255,7 +255,7 @@
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
 
     <script>
-        const DB_KEY = 'neomap_offline_places_v5';
+        const DB_KEY = 'neomap_offline_places_v6';
         
         function getSavedPlaces() {
             try {
@@ -302,6 +302,7 @@
         let userCoords = null;
         let marker = null;
         let destinationCoords = null;
+        let destinationMarker = null;
         let routePolyline = null;
         let rawRouteCoords = null;
         let following = true;
@@ -324,6 +325,15 @@
                 html: `<div style="font-size: 26px; filter: drop-shadow(0 0 8px rgba(56,189,248,0.8));">${emojiMap[currentTransport]}</div>`,
                 iconSize: [32, 32],
                 iconAnchor: [16, 16]
+            });
+        }
+
+        function getDestinationIcon() {
+            return L.divIcon({
+                className: 'custom-dest-marker',
+                html: `<div style="font-size: 26px; filter: drop-shadow(0 0 8px rgba(239,68,68,0.8));">📍</div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 32]
             });
         }
 
@@ -408,6 +418,7 @@
                             searchInput.value = place.display_name;
                             searchResults.style.display = 'none';
                             
+                            // Reseta qualquer rota anterior
                             routeActive = false;
                             rawRouteCoords = null;
                             if (routePolyline) {
@@ -415,9 +426,21 @@
                                 routePolyline = null;
                             }
 
+                            // Adiciona ou atualiza o marcador de destino no mapa
+                            if (destinationMarker) {
+                                destinationMarker.setLatLng(destinationCoords);
+                            } else {
+                                destinationMarker = L.marker(destinationCoords, { icon: getDestinationIcon() }).addTo(map);
+                            }
+
                             following = false;
                             btnRecenter.style.display = 'flex';
-                            map.setView(destinationCoords, 16, { animate: true });
+                            
+                            // Aplica EXATAMENTE o mesmo nível de zoom atual do usuário (map.getZoom() ou 19 como fallback)
+                            const targetZoom = (userCoords && map.getZoom() > 2) ? map.getZoom() : 19;
+                            map.setView(destinationCoords, targetZoom, { animate: true });
+
+                            // Calcula apenas as informações de distância e tempo e exibe o botão "Iniciar Rota"
                             calculateRouteInfo();
                         };
                         searchResults.appendChild(div);
@@ -475,21 +498,25 @@
 
                     distVal.textContent = distanceKm.toFixed(1) + ' km';
                     timeVal.textContent = calculatedMinutes + ' min';
-                    routeInfoPanel.style.display = 'flex'; // Garante a exibição do painel e do botão internamente
+                    
+                    // Força a exibição explícita do painel contendo o botão "Iniciar Rota"
+                    routeInfoPanel.style.display = 'flex';
                 }
             } catch (err) {
                 console.error("Erro ao calcular info da rota:", err);
             }
         }
 
+        // Apenas desenha a rota quando o botão "Iniciar Rota" for clicado explicitamente
         btnStartRoute.onclick = () => {
             if (!userCoords || !destinationCoords) return;
 
             routeActive = true;
             following = true;
             btnRecenter.style.display = 'none';
-            
-            // Mantém o painel de informações visível ou esconde conforme preferência (aqui mantemos ativo com os dados)
+            routeInfoPanel.style.display = 'flex'; // Mantém o painel visível com distância/tempo
+
+            map.setView(userCoords, map.getZoom(), { animate: true });
             fetchRouteGeometry(true);
         };
 

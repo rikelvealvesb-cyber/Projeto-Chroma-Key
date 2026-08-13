@@ -2,17 +2,17 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeoMap Ultra - Futuro & Minimalista</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NeoMap Ultra - Navegação Avançada</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <!-- Leaflet Routing Machine CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <!-- Leaflet Rotated Marker / Transform (para rotação suave) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.css" />
 
     <style>
         :root {
-            --bg-glass: rgba(15, 23, 42, 0.75);
+            --bg-glass: rgba(15, 23, 42, 0.82);
             --border-glass: rgba(255, 255, 255, 0.12);
             --accent: #38bdf8;
             --accent-glow: rgba(56, 189, 248, 0.4);
@@ -41,7 +41,7 @@
             z-index: 1;
         }
 
-        /* Painel de Controle Superior (Futurista & Minimalista) */
+        /* Painel Superior */
         .cyber-panel {
             position: absolute;
             top: 20px;
@@ -84,7 +84,6 @@
             box-shadow: 0 0 12px var(--accent-glow);
         }
 
-        /* Resultados da Busca em Tempo Real */
         #search-results {
             position: absolute;
             top: calc(100% + 8px);
@@ -114,7 +113,6 @@
             color: var(--text-main);
         }
 
-        /* Seletores de Transporte e Info */
         .controls-row {
             display: flex;
             justify-content: space-between;
@@ -149,23 +147,46 @@
             box-shadow: 0 0 10px var(--accent-glow);
         }
 
-        /* Painel de Rota (Distância e Tempo) */
-        #route-info {
+        /* Painel de Informações e Botão Iniciar Rota */
+        #route-info-panel {
             display: none;
-            background: rgba(2, 6, 23, 0.8);
+            background: rgba(2, 6, 23, 0.85);
             border: 1px solid var(--border-glass);
             border-radius: 10px;
-            padding: 10px 14px;
-            font-size: 0.85rem;
-            color: var(--text-main);
-            justify-content: space-between;
-            align-items: center;
+            padding: 12px 14px;
+            flex-direction: column;
+            gap: 10px;
             animation: fadeIn 0.3s ease;
         }
 
-        #route-info span {
+        .route-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .route-details span {
             color: var(--accent);
             font-weight: 600;
+        }
+
+        #btn-start-route {
+            width: 100%;
+            background: linear-gradient(135deg, #38bdf8, #0284c7);
+            color: #0f172a;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            box-shadow: 0 0 15px var(--accent-glow);
+            transition: transform 0.2s;
+        }
+
+        #btn-start-route:active {
+            transform: scale(0.97);
         }
 
         /* Botão Flutuante de Localização */
@@ -195,11 +216,6 @@
             background: rgba(15, 23, 42, 0.9);
         }
 
-        /* Ocultar instruções padrão feias do Leaflet Routing Machine */
-        .leaflet-routing-container {
-            display: none !important;
-        }
-
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-5px); }
             to { opacity: 1; transform: translateY(0); }
@@ -208,7 +224,6 @@
 </head>
 <body>
 
-    <!-- Painel Principal Futurista -->
     <div class="cyber-panel">
         <div class="search-container">
             <input type="text" id="search-input" placeholder="Buscar destino no mapa..." autocomplete="off">
@@ -224,25 +239,31 @@
             </div>
         </div>
 
-        <div id="route-info">
-            <div>Distância: <span id="dist-val">--</span></div>
-            <div>Tempo: <span id="time-val">--</span></div>
+        <div id="route-info-panel">
+            <div class="route-details">
+                <div>Distância: <span id="dist-val">--</span></div>
+                <div>Tempo: <span id="time-val">--</span></div>
+            </div>
+            <button id="btn-start-route">Iniciar Rota</button>
         </div>
     </div>
 
-    <!-- Botão de Recentrar -->
     <button id="btn-recenter" title="Voltar à sua localização">📍</button>
 
-    <!-- Mapa -->
     <div id="map"></div>
 
-    <!-- Scripts Leaflet & Routing -->
+    <!-- Leaflet JS & Plugin de Rotação -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
 
     <script>
-        // Inicialização do Mapa com Tema Escuro Minimalista (CartoDB Dark Matter)
-        const map = L.map('map', { zoomControl: false }).setView([0, 0], 2);
+        // Inicialização do Mapa com suporte a Rotação (touchRotated: true permite girar com dois dedos)
+        const map = L.map('map', { 
+            zoomControl: false,
+            rotate: true,
+            touchRotate: true,
+            rotateControl: false
+        }).setView([0, 0], 2);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap & CARTO',
@@ -251,29 +272,22 @@
 
         let userCoords = null;
         let marker = null;
-        let routingControl = null;
         let destinationCoords = null;
+        let routePolyline = null;
         let following = true;
-        let currentTransport = 'foot'; // foot, bike, motorcycle, car
+        let routeActive = false;
+        let currentTransport = 'foot';
 
         const btnRecenter = document.getElementById('btn-recenter');
         const searchInput = document.getElementById('search-input');
         const searchResults = document.getElementById('search-results');
-        const routeInfo = document.getElementById('route-info');
+        const routeInfoPanel = document.getElementById('route-info-panel');
         const distVal = document.getElementById('dist-val');
         const timeVal = document.getElementById('time-val');
-
-        // Mapeamento de perfis para o OSRM
-        const profileMap = {
-            foot: 'foot',
-            bike: 'bike',
-            motorcycle: 'bike', // OSRM padrão usa bike/car, simulamos moto com perfil otimizado
-            car: 'car'
-        };
+        const btnStartRoute = document.getElementById('btn-start-route');
 
         const emojiMap = { foot: '🚶', bike: '🚲', motorcycle: '🏍️', car: '🚗' };
 
-        // Ícone customizado do usuário
         function getUserIcon() {
             return L.divIcon({
                 className: 'custom-user-marker',
@@ -283,46 +297,42 @@
             });
         }
 
-        // Função de Atualização de Localização
+        // Atualização contínua de localização e manutenção da rota acoplada
         function updateLocation(pos) {
             userCoords = [pos.coords.latitude, pos.coords.longitude];
 
             if (!marker) {
                 marker = L.marker(userCoords, { icon: getUserIcon() }).addTo(map);
-                // Primeiro carregamento: Centraliza e dá o maior zoom seguro possível (ex: 19)
                 map.setView(userCoords, 19, { animate: true });
             } else {
                 marker.setLatLng(userCoords);
                 marker.setIcon(getUserIcon());
             }
 
-            // Se o modo de seguimento estiver ativo, acompanha o usuário suavemente
             if (following) {
-                map.setView(userCoords, map.getZoom() < 17 ? 19 : map.getZoom(), { animate: true });
+                map.setView(userCoords, routeActive ? 20 : 19, { animate: true });
             }
 
-            // Se houver destino ativo, atualiza a rota em tempo real
-            if (destinationCoords) {
-                updateRoute();
+            // Se a rota estiver ativa, recalcula/atualiza o ponto inicial da linha instantaneamente
+            if (routeActive && destinationCoords) {
+                fetchRouteGeometry();
             }
         }
 
-        // Detecta quando o usuário interage manualmente com o mapa (bug de zoom corrigido)
-        map.on('dragstart zoomstart', () => {
+        // Interações manuais (arrastar ou girar com dois dedos) desativam o modo automático
+        map.on('dragstart zoomstart rotatestart', () => {
             following = false;
             btnRecenter.style.display = 'flex';
         });
 
-        // Botão para voltar à localização com zoom máximo
         btnRecenter.onclick = () => {
             if (userCoords) {
                 following = true;
-                map.setView(userCoords, 19, { animate: true });
+                map.setView(userCoords, routeActive ? 20 : 19, { animate: true });
                 btnRecenter.style.display = 'none';
             }
         };
 
-        // Geolocalização em Tempo Real de Alta Precisão
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(updateLocation, (err) => {
                 console.error("Erro GPS:", err.message);
@@ -333,7 +343,7 @@
             });
         }
 
-        // Sistema de busca em tempo real (Nominatim OpenStreetMap)
+        // Busca de Endereços em Tempo Real
         let searchTimeout;
         searchInput.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
@@ -360,10 +370,15 @@
                                 destinationCoords = [parseFloat(place.lat), parseFloat(place.lon)];
                                 searchInput.value = place.display_name;
                                 searchResults.style.display = 'none';
+                                routeActive = false;
+                                if (routePolyline) {
+                                    map.removeLayer(routePolyline);
+                                    routePolyline = null;
+                                }
                                 following = false;
                                 btnRecenter.style.display = 'flex';
                                 map.setView(destinationCoords, 16, { animate: true });
-                                updateRoute();
+                                calculateRouteInfo();
                             };
                             searchResults.appendChild(div);
                         });
@@ -376,14 +391,12 @@
             }, 350);
         });
 
-        // Fechar resultados ao clicar fora
         document.addEventListener('click', (e) => {
             if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
                 searchResults.style.display = 'none';
             }
         });
 
-        // Seleção de meio de transporte
         document.querySelectorAll('.transport-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.transport-btn').forEach(b => b.classList.remove('active'));
@@ -391,56 +404,81 @@
                 targetBtn.classList.add('active');
                 currentTransport = targetBtn.getAttribute('data-mode');
 
-                if (marker) {
-                    marker.setIcon(getUserIcon());
-                }
-
-                if (destinationCoords) {
-                    updateRoute();
-                }
+                if (marker) marker.setIcon(getUserIcon());
+                if (destinationCoords) calculateRouteInfo();
             });
         });
 
-        // Função para traçar a rota e calcular tempo/km
-        function updateRoute() {
+        // Mapeamento de perfis OSRM
+        const osrmProfiles = {
+            foot: 'foot',
+            bike: 'bike',
+            motorcycle: 'bike',
+            car: 'car'
+        };
+
+        // Calcula apenas estimativas de tempo e distância antes de iniciar
+        async function calculateRouteInfo() {
             if (!userCoords || !destinationCoords) return;
 
-            if (routingControl) {
-                map.removeControl(routingControl);
+            const profile = osrmProfiles[currentTransport];
+            const url = `https://router.project-osrm.org/route/v1/${profile}/${userCoords[1]},${userCoords[0]};${destinationCoords[1]},${destinationCoords[0]}?overview=false`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.routes && data.routes.length > 0) {
+                    const summary = data.routes[0];
+                    distVal.textContent = (summary.distance / 1000).toFixed(1) + ' km';
+                    timeVal.textContent = Math.round(summary.duration / 60) + ' min';
+                    routeInfoPanel.style.display = 'flex';
+                }
+            } catch (err) {
+                console.error("Erro ao calcular rota:", err);
             }
+        }
 
-            // Mapeia router OSRM
-            const routerService = L.Routing.osrmv1({
-                serviceUrl: 'https://router.project-osrm.org/route/v1',
-                profile: profileMap[currentTransport]
-            });
+        // Botão "Iniciar Rota": Traça apenas a linha azul pura, centraliza e dá zoom máximo direto no usuário
+        btnStartRoute.onclick = () => {
+            if (!userCoords || !destinationCoords) return;
 
-            routingControl = L.Routing.control({
-                waypoints: [
-                    L.latLng(userCoords[0], userCoords[1]),
-                    L.latLng(destinationCoords[0], destinationCoords[1])
-                ],
-                router: routerService,
-                lineOptions: {
-                    styles: [{ color: '#38bdf8', opacity: 0.8, weight: 5 }]
-                },
-                addWaypoints: false,
-                draggableWaypoints: false,
-                fitSelectedRoutes: true,
-                show: false
-            }).addTo(map);
+            routeActive = true;
+            following = true;
+            btnRecenter.style.display = 'none';
+            routeInfoPanel.style.display = 'none'; // Recolhe painel para tela limpa
 
-            routingControl.on('routesfound', function(e) {
-                const route = e.routes[0];
-                const summary = route.summary;
-                
-                const km = (summary.totalDistance / 1000).toFixed(1) + ' km';
-                const minutes = Math.round(summary.totalTime / 60) + ' min';
+            map.setView(userCoords, 20, { animate: true });
+            fetchRouteGeometry();
+        };
 
-                distVal.textContent = km;
-                timeVal.textContent = minutes;
-                routeInfo.style.display = 'flex';
-            });
+        // Busca a geometria exata da linha da rota via OSRM sem marcadores secundários
+        async function fetchRouteGeometry() {
+            if (!userCoords || !destinationCoords) return;
+
+            const profile = osrmProfiles[currentTransport];
+            const url = `https://router.project-osrm.org/route/v1/${profile}/${userCoords[1]},${userCoords[0]};${destinationCoords[1]},${destinationCoords[0]}?overview=full&geometries=geojson`;
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.routes && data.routes.length > 0) {
+                    const coords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+
+                    if (routePolyline) {
+                        routePolyline.setLatLngs(coords);
+                    } else {
+                        routePolyline = L.polyline(coords, {
+                            color: '#38bdf8',
+                            weight: 6,
+                            opacity: 0.85,
+                            lineCap: 'round',
+                            lineJoin: 'round'
+                        }).addTo(map);
+                    }
+                }
+            } catch (err) {
+                console.error("Erro ao carregar geometria da rota:", err);
+            }
         }
     </script>
 </body>

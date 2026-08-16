@@ -113,31 +113,6 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
     box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
 } 
 
-/* Subtítulo Elegante Abaixo do Header */ 
-.store-subtitle { 
-    background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%); 
-    color: #f3e8ff; 
-    text-align: center; 
-    padding: 12px 20px 16px 20px; 
-    font-size: 0.95rem; 
-    font-weight: 500; 
-    line-height: 1.5; 
-    box-shadow: 0 4px 12px rgba(107, 33, 168, 0.15); 
-    border-bottom-left-radius: 16px; 
-    border-bottom-right-radius: 16px; 
-    position: sticky; 
-    top: 115px; 
-    z-index: 999; 
-    animation: fadeIn 0.4s ease-in-out; 
-} 
-.store-subtitle span { 
-    display: block; 
-    font-size: 0.8rem; 
-    opacity: 0.9; 
-    margin-top: 2px; 
-    font-style: italic; 
-} 
-
 .container { max-width: 600px; margin: 0 auto; padding: 15px; } 
 .category-title { font-size: 1.1rem; color: #1e293b; margin: 20px 0 10px 0; font-weight: bold; animation: fadeIn 0.4s ease-in-out; } 
 
@@ -155,32 +130,16 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
 .add-btn:hover { background: #581c87; } 
 .add-btn:active { transform: scale(0.9); } 
 
-/* Telas (Detalhes, Carrinho, Cupons) */ 
+/* Telas (Detalhes, Carrinho, Cupons, etc) */ 
 .screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 2000; flex-direction: column; animation: fadeIn 0.25s ease-in-out; } 
 .screen-header { background: #6b21a8; color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px; font-size: 1.1rem; font-weight: bold; } 
 .back-arrow { cursor: pointer; font-size: 1.3rem; transition: transform 0.2s; } 
 .back-arrow:hover { transform: translateX(-3px); } 
 .screen-body { flex: 1; overflow-y: auto; padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; } 
 
-/* Detalhes do Produto - Ajustado para exibir a imagem por completo sem cortes */ 
-.detail-img-container { 
-    width: 100%; 
-    height: 250px; 
-    border-radius: 12px; 
-    background: #1e293b; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    margin-bottom: 15px; 
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
-    overflow: hidden; 
-} 
-.detail-img { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: contain; 
-} 
-
+/* Detalhes do Produto */ 
+.detail-img-container { width: 100%; height: 250px; border-radius: 12px; background: #1e293b; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow: hidden; } 
+.detail-img { width: 100%; height: 100%; object-fit: contain; } 
 .detail-title { font-size: 1.4rem; color: #0f172a; margin-bottom: 8px; font-weight: bold; } 
 .detail-price { font-size: 1.3rem; color: #6b21a8; font-weight: bold; margin-bottom: 15px; } 
 .detail-desc { color: #475569; font-size: 0.95rem; margin-bottom: 20px; line-height: 1.6; } 
@@ -281,6 +240,14 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
         </div> 
     </div> 
     <div class="header-actions"> 
+        <!-- Ícone de Pedido Recente (Repetir Pedido) -->
+        <button class="icon-btn" onclick="openScreenWithHistory('recent-order-screen'); loadRecentOrderUI();" title="Meu Pedido Recente"> 
+            <svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> 
+                <circle cx="12" cy="12" r="10"></circle> 
+                <polyline points="12 6 12 12 16 14"></polyline> 
+            </svg> 
+        </button> 
+
         <button class="icon-btn" onclick="openScreenWithHistory('coupon-screen')" title="Cupons"> 
             <svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> 
                 <path d="M21 10V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2a2 2 0 0 1 0 4v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2a2 2 0 0 1 0-4z"></path> 
@@ -294,12 +261,6 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
         </button> 
     </div> 
 </header> 
-
-<!-- Subtítulo Elegante --> 
-<div class="store-subtitle"> 
-    Sabor, qualidade e carinho 💜 
-    <span>A melhor forma de se refrescar no verão.</span> 
-</div> 
 
 <div class="container"> 
     <input type="text" id="search-input" onkeyup="searchProducts()" style="width:100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 15px; outline:none;" placeholder="Pesquisar no cardápio..."> 
@@ -402,6 +363,17 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
     </div> 
 </div> 
 
+<!-- Tela Meu Pedido Recente -->
+<div id="recent-order-screen" class="screen">
+    <div class="screen-header">
+        <span class="back-arrow" onclick="goBack()">←</span>
+        <span>Meu Pedido Recente</span>
+    </div>
+    <div class="screen-body">
+        <div id="recent-order-content"></div>
+    </div>
+</div>
+
 <!-- Tela do Carrinho --> 
 <div id="cart-screen" class="screen"> 
     <div class="screen-header"> 
@@ -443,23 +415,56 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
     </div> 
 </div> 
 
-<!-- Diálogo Personalizado de Forma de Pagamento --> 
+<!-- Tela de Pagamento Pix -->
+<div id="order-status-screen" class="screen">
+    <div class="screen-header">
+        <span class="back-arrow" onclick="goBack()">←</span>
+        <span>Pagamento Pix & Envio</span>
+    </div>
+    <div class="screen-body" style="text-align: center;">
+        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 5px;">
+            <h3 style="color: #6b21a8; margin-bottom: 5px;">Pague com Pix</h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Copie o código abaixo, pague no aplicativo do seu banco e depois envie o comprovante.</p>
+            
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: left; font-size: 0.85rem; border: 1px solid #e2e8f0;">
+                <div style="font-weight: bold; color: #0f172a; margin-bottom: 4px;">Resumo do Pedido:</div>
+                <div id="pix-resumo-itens" style="color: #475569; max-height: 90px; overflow-y: auto; margin-bottom: 6px;"></div>
+                <div style="border-top: 1px dashed #cbd5e1; padding-top: 6px; display: flex; justify-content: space-between; font-weight: bold; color: #6b21a8;">
+                    <span>Total a Pagar:</span>
+                    <span id="pix-resumo-total">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 5px;">Pix Copia e Cola:</label>
+                <input type="text" id="pix-copia-cola" readonly style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.8rem; background: #f1f5f9; text-align: center;" onclick="this.select()">
+                <button onclick="copyPixCode()" style="margin-top: 8px; background: #6b21a8; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: bold; cursor: pointer;">Copiar Chave Pix</button>
+            </div>
+
+            <div style="background: #fef08a; padding: 10px; border-radius: 8px; color: #854d0e; font-size: 0.8rem; margin-bottom: 15px;">
+                ⚠️ Após o pagamento, clique no botão abaixo para enviar o pedido e o comprovante pelo WhatsApp.
+            </div>
+
+            <button class="checkout-btn" onclick="checkoutWhatsAppWithPixReceipt()">Enviar Pedido & Comprovante no WhatsApp</button>
+        </div>
+    </div>
+</div>
+
+<!-- Diálogo de Forma de Pagamento --> 
 <div id="payment-dialog-overlay"> 
     <div class="payment-dialog-box"> 
         <div class="payment-dialog-title">Forma de Pagamento</div> 
         <div class="payment-dialog-subtitle">Selecione como deseja pagar seu pedido:</div> 
         <div class="payment-options-grid"> 
-            <!-- PIX --> 
             <div class="payment-option-card selected" onclick="selectPaymentOption('Pix', this)"> 
                 <div class="payment-option-icon" style="color: #059669;"> 
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 12l10 10 10-10L12 2z"/><path d="M12 8v8M8 12h8"/></svg> 
                 </div> 
                 <div class="payment-option-info"> 
-                    <div class="payment-option-name">Pix</div> 
-                    <div class="payment-option-desc">Aprovação instantânea</div> 
+                    <div class="payment-option-name">Pix (Copia e Cola)</div> 
+                    <div class="payment-option-desc">Pague e envie o comprovante</div> 
                 </div> 
             </div> 
-            <!-- CARTÃO DE CRÉDITO --> 
             <div class="payment-option-card" onclick="selectPaymentOption('Cartão de Crédito', this)"> 
                 <div class="payment-option-icon" style="color: #2563eb;"> 
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> 
@@ -469,7 +474,6 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
                     <div class="payment-option-desc">Leva a maquininha até você</div> 
                 </div> 
             </div> 
-            <!-- CARTÃO DE DÉBITO --> 
             <div class="payment-option-card" onclick="selectPaymentOption('Cartão de Débito', this)"> 
                 <div class="payment-option-icon" style="color: #d97706;"> 
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><circle cx="12" cy="15" r="1"/></svg> 
@@ -479,7 +483,6 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
                     <div class="payment-option-desc">Pagamento na entrega</div> 
                 </div> 
             </div> 
-            <!-- DINHEIRO --> 
             <div class="payment-option-card" onclick="selectPaymentOption('Dinheiro', this)"> 
                 <div class="payment-option-icon" style="color: #16a34a;"> 
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> 
@@ -490,19 +493,18 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
                 </div> 
             </div> 
         </div> 
-        <!-- Campo Dinâmico de Troco --> 
         <div id="change-container"> 
             <label for="change-input">Troco para quanto? (Ex: 50 ou deixe em branco se não precisar)</label> 
             <input type="number" id="change-input" placeholder="Ex: 50.00"> 
         </div> 
         <div class="payment-dialog-actions"> 
             <button class="dialog-btn-cancel" onclick="closePaymentDialog()">Cancelar</button> 
-            <button class="dialog-btn-confirm" onclick="confirmCheckout()">Continuar para WhatsApp</button> 
+            <button class="dialog-btn-confirm" onclick="confirmCheckout()">Continuar</button> 
         </div> 
     </div> 
 </div> 
 
-<!-- Tela Personalizada de Sem Conexão --> 
+<!-- Tela Sem Conexão --> 
 <div id="offline-screen"> 
     <svg class="offline-icon" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> 
         <line x1="1" y1="1" x2="23" y2="23"></line> 
@@ -518,7 +520,7 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
     <div class="reconnect-spinner"></div> 
 </div> 
 
-<!-- Toast de Notificação --> 
+<!-- Toast --> 
 <div id="toast">Item adicionado com sucesso!</div> 
 
 <script> 
@@ -532,7 +534,6 @@ const validCoupons = {
     'ACAI10': { type: 'percent', value: 10, desc: '10% de desconto' } 
 }; 
 
-// Gerenciamento de Histórico para o botão Voltar (onBackPressed) 
 window.history.replaceState({ screen: 'main' }, ''); 
 window.addEventListener('popstate', (event) => { 
     let screens = document.querySelectorAll('.screen'); 
@@ -819,8 +820,82 @@ function selectPaymentOption(method, cardElement) {
 
 function confirmCheckout() { 
     closePaymentDialog(); 
-    checkoutWhatsApp(); 
+    if (selectedPayment === 'Pix') {
+        openPixPaymentScreen();
+    } else {
+        saveAndFinalizeOrder();
+        checkoutWhatsApp();
+    }
 } 
+
+function saveAndFinalizeOrder() {
+    if (cart.length === 0) return;
+    localStorage.setItem('last_acai_order', JSON.stringify(cart));
+}
+
+function openPixPaymentScreen() {
+    openScreenWithHistory('order-status-screen');
+
+    let subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    let discountVal = 0;
+    if (activeCoupon) {
+        if (activeCoupon.type === 'fixed') discountVal = activeCoupon.value;
+        else if (activeCoupon.type === 'percent') discountVal = (subtotal * activeCoupon.value) / 100;
+    }
+    let total = Math.max(0, subtotal - discountVal);
+
+    let resumoHtml = '';
+    cart.forEach(item => {
+        resumoHtml += `<div>• ${item.quantity}x ${item.name} (${formatPrice(item.price * item.quantity)})</div>`;
+    });
+    document.getElementById('pix-resumo-itens').innerHTML = resumoHtml;
+    document.getElementById('pix-resumo-total').innerText = formatPrice(total);
+
+    const pixCopiaEColaReal = "00020126330014BR.GOV.BCB.PIX0111523122268205204000053039865802BR5922RIKELVE ALVES DE BRITO6009SAO PAULO622605224bBwJHXgZETnN6XDcaoso063046BD8";
+    document.getElementById('pix-copia-cola').value = pixCopiaEColaReal;
+}
+
+function copyPixCode() {
+    let copyText = document.getElementById('pix-copia-cola');
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(copyText.value);
+    showToast('Chave Pix copiada com sucesso!');
+}
+
+function checkoutWhatsAppWithPixReceipt() {
+    saveAndFinalizeOrder();
+
+    let message = "📦 *NOVO PEDIDO - AÇAÍ DA 24 FB* 📦%0A%0A"; 
+    message += "📃 *ITENS DO PEDIDO:*%0A"; 
+    let subtotal = 0; 
+    cart.forEach(item => { 
+        let sub = item.price * item.quantity; 
+        subtotal += sub; 
+        let obsText = item.observation ? `_%0A ↳ 📝 Obs: ${item.observation}_` : ''; 
+        message += `• *${item.quantity}x* ${item.name} — *${formatPrice(sub)}*${obsText}%0A`; 
+    }); 
+    let discountVal = 0; 
+    if (activeCoupon) { 
+        if (activeCoupon.type === 'fixed') { 
+            discountVal = activeCoupon.value; 
+            if (discountVal > subtotal) discountVal = subtotal; 
+        } else if (activeCoupon.type === 'percent') { 
+            discountVal = (subtotal * activeCoupon.value) / 100; 
+        } 
+        message += `%0A🏷️ *Cupom Aplicado:* ${activeCoupon.code} (-${formatPrice(discountVal)})`; 
+        localStorage.setItem('used_coupon_' + activeCoupon.code, 'true'); 
+    } 
+    let total = subtotal - discountVal; 
+    if (total < 0) total = 0; 
+    message += `%0A%0A💳 *FORMA DE PAGAMENTO:* Pix`; 
+    message += `%0A💰 *TOTAL PAGO:* ${formatPrice(total)}`; 
+    message += `%0A%0A📎 *[ Segue o comprovante do Pix em anexo ]*`; 
+    
+    let phone = "5511954962246"; 
+    let url = `https://wa.me/${phone}?text=${message}`; 
+    window.open(url, '_blank'); 
+}
 
 function checkoutWhatsApp() { 
     let message = "📦 *NOVO PEDIDO - AÇAÍ DA 24 FB* 📦%0A%0A"; 
@@ -866,6 +941,67 @@ function checkoutWhatsApp() {
     window.open(url, '_blank'); 
 } 
 
+function loadRecentOrderUI() {
+    let container = document.getElementById('recent-order-content');
+    let savedOrderJson = localStorage.getItem('last_acai_order');
+    
+    if (!savedOrderJson) {
+        container.innerHTML = `
+            <div style="text-align:center; padding: 40px 20px; color:#64748b;">
+                <p style="font-size: 1.1rem; font-weight: bold; margin-bottom: 8px;">Nenhum pedido recente encontrado.</p>
+                <p style="font-size: 0.85rem;">Assim que você finalizar seu primeiro pedido, ele aparecerá aqui para facilitar a recompra!</p>
+            </div>
+        `;
+        return;
+    }
+
+    let savedItems = JSON.parse(savedOrderJson);
+    let html = '<p style="font-size: 0.9rem; color: #64748b; margin-bottom: 15px;">Estes foram os itens do seu último pedido. Deseja pedir novamente?</p>';
+    let totalSub = 0;
+
+    savedItems.forEach(item => {
+        let itemTotal = item.price * item.quantity;
+        totalSub += itemTotal;
+        let obsText = item.observation ? `<div style="color: #475569; font-size: 0.8rem; margin-top: 4px; background: #f8fafc; padding: 6px; border-radius: 6px;">Obs: ${item.observation}</div>` : '';
+        html += `
+            <div style="background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <strong>${item.quantity}x ${item.name}</strong>
+                        ${obsText}
+                    </div>
+                    <span style="font-weight: bold; color: #6b21a8; font-size: 0.9rem;">${formatPrice(itemTotal)}</span>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `
+        <div style="background: white; padding: 15px; border-radius: 10px; margin-top: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem; margin-bottom: 15px;">
+                <span>Total do Pedido:</span>
+                <span style="color: #6b21a8;">${formatPrice(totalSub)}</span>
+            </div>
+            <button class="checkout-btn" onclick="reorderLastOrder()">Adicionar Tudo ao Carrinho & Comprar</button>
+        </div>
+    `;
+
+    container.innerHTML = html;
+}
+
+function reorderLastOrder() {
+    let savedOrderJson = localStorage.getItem('last_acai_order');
+    if (!savedOrderJson) return;
+
+    let savedItems = JSON.parse(savedOrderJson);
+    savedItems.forEach(item => {
+        addToCart(item.name, item.price, item.quantity, item.observation || '');
+    });
+
+    showToast('Itens adicionados ao carrinho!');
+    openScreenWithHistory('cart-screen');
+}
+
 function searchProducts() { 
     let query = document.getElementById('search-input').value.toLowerCase(); 
     let items = document.querySelectorAll('.menu-item'); 
@@ -879,4 +1015,5 @@ function searchProducts() {
     }); 
 } 
 </script> 
-</body> </html>
+</body> 
+</html>

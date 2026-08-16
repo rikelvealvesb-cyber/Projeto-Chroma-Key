@@ -151,10 +151,23 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
 .cart-item {
     background: white; padding: 12px; border-radius: 10px;
     margin-bottom: 10px; display: flex; justify-content: space-between;
-    align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); animation: fadeIn 0.3s ease-in-out;
+    align-items: flex-start; box-shadow: 0 1px 3px rgba(0,0,0,0.05); animation: fadeIn 0.3s ease-in-out;
 }
-.cart-item-clickable { cursor: pointer; flex: 1; padding-right: 10px; transition: opacity 0.2s; }
+.cart-item-clickable { cursor: pointer; flex: 1; padding-right: 10px; min-width: 0; transition: opacity 0.2s; }
 .cart-item-clickable:hover { opacity: 0.8; }
+.cart-obs-text {
+    color: #475569;
+    font-size: 0.8rem;
+    margin-top: 4px;
+    line-height: 1.3;
+    background: #f8fafc;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border-left: 3px solid #6b21a8;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+.cart-right-section { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .cart-qty-controls { display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; }
 .cart-qty-btn {
     background: none; border: none; font-weight: bold; font-size: 0.9rem;
@@ -385,7 +398,7 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
             <textarea id="detail-obs" class="obs-textarea" placeholder="Ex: Sem leite condensado, caprichar na paçoca..."></textarea>
         </div>
 
-        <button id="detail-add-btn" class="checkout-btn" style="background:#6b21a8;">Adicionar ao Carrinho</button>
+        <button id="detail-add-btn" class="checkout-btn" style="background:#6b21a8;">Salvar Alterações</button>
     </div>
 </div>
 
@@ -622,7 +635,6 @@ function selectCouponAndApplyFromCart(code) {
     processCouponCode(code);
 }
 
-// Sistema Inteligente de Cupom: Impede o uso duplicado verificando o localStorage do navegador
 function processCouponCode(code) {
     if (!code) {
         showToast('Digite o nome de um cupom válido!');
@@ -674,19 +686,39 @@ function formatPrice(value) {
     return 'R$ ' + value.toFixed(2).replace('.', ',');
 }
 
-function openDetail(name, price, desc, img) {
-    currentItemData = { name, price, desc, img, qty: 1 };
+// Atualizado para receber opcionalmente a quantidade e a observação para edição no carrinho
+function openDetail(name, price, desc, img, initialQty = 1, initialObs = '', editingIndex = -1) {
+    currentItemData = { name, price, desc, img, qty: initialQty, editingIndex: editingIndex };
+    
     document.getElementById('detail-title').innerText = name;
     document.getElementById('detail-price').innerText = formatPrice(price);
     document.getElementById('detail-desc').innerText = desc;
     document.getElementById('detail-img').src = img;
-    document.getElementById('detail-qty').innerText = 1;
-    document.getElementById('detail-obs').value = '';
+    document.getElementById('detail-qty').innerText = initialQty;
+    document.getElementById('detail-obs').value = initialObs;
     
     let addBtn = document.getElementById('detail-add-btn');
+    
+    if (editingIndex > -1) {
+        addBtn.innerText = "Salvar Alterações";
+    } else {
+        addBtn.innerText = "Adicionar ao Carrinho";
+    }
+
     addBtn.onclick = function() {
         let obs = document.getElementById('detail-obs').value.trim();
-        addToCart(currentItemData.name, currentItemData.price, currentItemData.qty, obs);
+        
+        if (currentItemData.editingIndex > -1) {
+            // Se estiver editando um item existente no carrinho
+            let idx = currentItemData.editingIndex;
+            cart[idx].quantity = currentItemData.qty;
+            cart[idx].observation = obs;
+            updateCartUI();
+            showToast("Item atualizado com sucesso!");
+        } else {
+            // Se for um produto novo adicionado do cardápio principal
+            addToCart(currentItemData.name, currentItemData.price, currentItemData.qty, obs);
+        }
         goBack();
     };
     
@@ -725,14 +757,14 @@ function updateCartUI() {
         cart.forEach((item, index) => {
             let itemTotal = item.price * item.quantity;
             subtotalVal += itemTotal;
-            let obsText = item.observation ? `<br><small style="color:#0284c7;">Obs: ${item.observation}</small>` : '';
+            let obsText = item.observation ? `<div class="cart-obs-text">Obs: ${item.observation}</div>` : '';
             container.innerHTML += `
                 <div class="cart-item">
-                    <div class="cart-item-clickable" onclick="editCartItem('${item.name}')">
-                        <strong>${item.name}</strong> ${obsText}<br>
-                        <small style="color:#64748b;">${formatPrice(item.price)} un.</small>
+                    <div class="cart-item-clickable" onclick="editCartItem(${index})">
+                        <strong>${item.name}</strong> ${obsText}
+                        <small style="color:#64748b; display:block; margin-top:4px;">${formatPrice(item.price)} un. (Clique para editar)</small>
                     </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="cart-right-section">
                         <div class="cart-qty-controls">
                             <button class="cart-qty-btn" onclick="decreaseCartQty(${index})">-</button>
                             <span style="font-size:0.85rem; font-weight:bold;">${item.quantity}</span>
@@ -773,11 +805,11 @@ function updateCartUI() {
     document.getElementById('cart-total').innerText = formatPrice(totalVal);
 }
 
-function editCartItem(name) {
-    let productData = getProductBaseData(name);
-    if (productData) {
-        openDetail(productData.name, productData.price, productData.desc, productData.img);
-    }
+// Passa o índice do carrinho, quantidade atual e observação exata para a tela de detalhes
+function editCartItem(index) {
+    let item = cart[index];
+    let productData = getProductBaseData(item.name);
+    openDetail(productData.name, productData.price, productData.desc, productData.img, item.quantity, item.observation, index);
 }
 
 function getProductBaseData(name) {

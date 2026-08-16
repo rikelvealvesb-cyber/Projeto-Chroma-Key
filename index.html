@@ -74,21 +74,6 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
 
 .container { max-width: 600px; margin: 0 auto; padding: 15px; }
 
-/* Categorias em Abas Horizontais */
-.categories {
-    display: flex; gap: 10px; overflow-x: auto;
-    padding-bottom: 10px; margin-bottom: 15px;
-}
-.categories::-webkit-scrollbar { display: none; }
-.cat-btn {
-    background: #e2e8f0; border: none; padding: 8px 16px;
-    border-radius: 20px; font-size: 0.85rem; font-weight: 600;
-    cursor: pointer; white-space: nowrap; color: #475569; transition: all 0.2s;
-}
-.cat-btn.active {
-    background: #6b21a8; color: white;
-    box-shadow: 0 2px 8px rgba(107, 33, 168, 0.4); transform: translateY(-2px);
-}
 .category-title {
     font-size: 1.1rem; color: #1e293b; margin: 20px 0 10px 0;
     font-weight: bold; animation: fadeIn 0.4s ease-in-out;
@@ -336,92 +321,30 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
 <div class="container">
     <input type="text" id="search-input" onkeyup="searchProducts()" style="width:100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 15px; outline:none;" placeholder="Pesquisar no cardápio...">
 
-    <!-- Categorias -->
-    <div class="categories">
-        <button class="cat-btn active" onclick="filterCategory('all', this)">Todos</button>
-        <button class="cat-btn" onclick="filterCategory('copos', this)">Copos</button>
-        <button class="cat-btn" onclick="filterCategory('barcas', this)">Barcas</button>
-        <button class="cat-btn" onclick="filterCategory('adicionais', this)">Adicionais</button>
-        <button class="cat-btn" onclick="filterCategory('bebidas', this)">Bebidas</button>
-    </div>
-
     <div id="product-list">
-        <!-- Categoria Copos -->
-        <div class="category-title" data-cat="copos">Copos de Açaí</div>
-        <div class="menu-item" data-name="acai tradicional 300ml" data-cat="copos" onclick="openDetail('Açaí Tradicional 300ml', 14.00, 'Açaí puro batido na hora, granola crocante, leite condensado e paçoca triturada.', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQbgI45sBDYlMB5T4LSEd3PqBpx3lA0Zki9NFlTNwGaQg&s=10')">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQbgI45sBDYlMB5T4LSEd3PqBpx3lA0Zki9NFlTNwGaQg&s=10" class="item-img" alt="Açaí">
+        <!-- Categoria Garrafas -->
+        <div class="category-title">Açaí na Garrafa</div>
+        
+        <div class="menu-item" data-name="acai na garrafa 300ml" onclick="openDetail('Açaí na Garrafa 300ml', 15.00, 'Açaí, leite condensado, leite em pó, banana, paçoca', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAO0nleaLNXtkNpbe-8TdWGA2QkXhobYaUCIM0w0o_Z3dkQSK-pMmTosc&s=10')">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAO0nleaLNXtkNpbe-8TdWGA2QkXhobYaUCIM0w0o_Z3dkQSK-pMmTosc&s=10" class="item-img" alt="Açaí na Garrafa 300ml">
             <div class="item-info">
-                <h3>Açaí Tradicional 300ml</h3>
-                <p>Açaí, granola, leite condensado, paçoca e banana.</p>
+                <h3>Açaí na Garrafa 300ml</h3>
+                <p>Açaí, leite condensado, leite em pó, banana, paçoca</p>
                 <div class="price-row">
-                    <span class="price">R$ 14,00</span>
-                    <button class="add-btn" onclick="event.stopPropagation(); addToCart('Açaí Tradicional 300ml', 14.00, 1, '')">Adicionar</button>
+                    <span class="price">R$ 15,00</span>
+                    <button class="add-btn" onclick="event.stopPropagation(); addToCart('Açaí na Garrafa 300ml', 15.00, 1, '')">Adicionar</button>
                 </div>
             </div>
         </div>
 
-        <div class="menu-item" data-name="acai premium 500ml" data-cat="copos" onclick="openDetail('Açaí Premium 500ml', 20.00, 'Açaí cremoso de alta qualidade, morango fresco, banana, leite ninho em pó e calda especial de chocolate.', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQbgI45sBDYlMB5T4LSEd3PqBpx3lA0Zki9NFlTNwGaQg&s=10')">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQbgI45sBDYlMB5T4LSEd3PqBpx3lA0Zki9NFlTNwGaQg&s=10" class="item-img" alt="Açaí">
+        <div class="menu-item" data-name="acai na garrafa 500ml" onclick="openDetail('Açaí na Garrafa 500ml', 20.00, 'Açaí, leite condensado, leite em pó, banana, paçoca', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAO0nleaLNXtkNpbe-8TdWGA2QkXhobYaUCIM0w0o_Z3dkQSK-pMmTosc&s=10')">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAO0nleaLNXtkNpbe-8TdWGA2QkXhobYaUCIM0w0o_Z3dkQSK-pMmTosc&s=10" class="item-img" alt="Açaí na Garrafa 500ml">
             <div class="item-info">
-                <h3>Açaí Premium 500ml</h3>
-                <p>Açaí, morango, banana, leite ninho e calda de chocolate.</p>
+                <h3>Açaí na Garrafa 500ml</h3>
+                <p>Açaí, leite condensado, leite em pó, banana, paçoca</p>
                 <div class="price-row">
                     <span class="price">R$ 20,00</span>
-                    <button class="add-btn" onclick="event.stopPropagation(); addToCart('Açaí Premium 500ml', 20.00, 1, '')">Adicionar</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="menu-item" data-name="copo fit 300ml" data-cat="copos" onclick="openDetail('Copo Fit 300ml', 18.00, 'Açaí zero açúcar, dose de whey protein, pasta de amendoim integral e chia.', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQbgI45sBDYlMB5T4LSEd3PqBpx3lA0Zki9NFlTNwGaQg&s=10')">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQbgI45sBDYlMB5T4LSEd3PqBpx3lA0Zki9NFlTNwGaQg&s=10" class="item-img" alt="Fit">
-            <div class="item-info">
-                <h3>Copo Fit 300ml</h3>
-                <p>Açaí zero açúcar, whey, pasta de amendoim e chia.</p>
-                <div class="price-row">
-                    <span class="price">R$ 18,00</span>
-                    <button class="add-btn" onclick="event.stopPropagation(); addToCart('Copo Fit 300ml', 18.00, 1, '')">Adicionar</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Categoria Barcas -->
-        <div class="category-title" data-cat="barcas">Barcas de Açaí</div>
-        <div class="menu-item" data-name="barca familia 1l" data-cat="barcas" onclick="openDetail('Barca Família (1 Litro)', 45.00, 'Festival completo de sabores: Nutella, frutas frescas da estação, leite em pó, confeitos e biscoitos.', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-diXnUOwberLe5W1gM3j3E005GTrwqiue0I4EbEwR0Q&s=10')">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-diXnUOwberLe5W1gM3j3E005GTrwqiue0I4EbEwR0Q&s=10" class="item-img" alt="Barca">
-            <div class="item-info">
-                <h3>Barca Família (1 Litro)</h3>
-                <p>O festival de sabores: Nutella, frutas, leite em pó, biscoitos.</p>
-                <div class="price-row">
-                    <span class="price">R$ 45,00</span>
-                    <button class="add-btn" onclick="event.stopPropagation(); addToCart('Barca Família 1L', 45.00, 1, '')">Adicionar</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Categoria Adicionais -->
-        <div class="category-title" data-cat="adicionais">Adicionais Extras</div>
-        <div class="menu-item" data-name="adicional nutella" data-cat="adicionais" onclick="openDetail('Adicional de Nutella', 6.00, 'Porção generosa e exclusiva de creme de avelã original Nutella.', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSoB6fdoPLj0Ok1_nM56I6V62rrHU9iTxWLeSTBIOeX8g&s=10')">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSoB6fdoPLj0Ok1_nM56I6V62rrHU9iTxWLeSTBIOeX8g&s=10" class="item-img" alt="Nutella">
-            <div class="item-info">
-                <h3>Adicional de Nutella</h3>
-                <p>Porção generosa de creme de avelã original.</p>
-                <div class="price-row">
-                    <span class="price">R$ 6,00</span>
-                    <button class="add-btn" onclick="event.stopPropagation(); addToCart('Adicional de Nutella', 6.00, 1, '')">Adicionar</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Categoria Bebidas -->
-        <div class="category-title" data-cat="bebidas">Bebidas e Acompanhamentos</div>
-        <div class="menu-item" data-name="refrigerante lata 350ml" data-cat="bebidas" onclick="openDetail('Refrigerante Lata 350ml', 6.00, 'Lata gelada de 350ml (Coca-Cola, Guaraná Antarctica ou Sprite).', 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500')">
-            <img src="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=200" class="item-img" alt="Refrigerante">
-            <div class="item-info">
-                <h3>Refrigerante Lata 350ml</h3>
-                <p>Coca-Cola, Guaraná Antarctica ou Sprite.</p>
-                <div class="price-row">
-                    <span class="price">R$ 6,00</span>
-                    <button class="add-btn" onclick="event.stopPropagation(); addToCart('Refrigerante Lata 350ml', 6.00, 1, '')">Adicionar</button>
+                    <button class="add-btn" onclick="event.stopPropagation(); addToCart('Açaí na Garrafa 500ml', 20.00, 1, '')">Adicionar</button>
                 </div>
             </div>
         </div>
@@ -459,7 +382,7 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
 
         <div class="obs-container">
             <label for="detail-obs">Observações do pedido:</label>
-            <textarea id="detail-obs" class="obs-textarea" placeholder="Ex: Sem leite condensado, caprichar na granola..."></textarea>
+            <textarea id="detail-obs" class="obs-textarea" placeholder="Ex: Sem leite condensado, caprichar na paçoca..."></textarea>
         </div>
 
         <button id="detail-add-btn" class="checkout-btn" style="background:#6b21a8;">Adicionar ao Carrinho</button>
@@ -491,7 +414,7 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
         <div class="coupon-card" onclick="selectCouponAndApply('ACAI10')">
             <div>
                 <strong>ACAI10</strong><br>
-                <small style="color:#64748b;">10% de desconto em qualquer barca ou pedido (Uso único).</small>
+                <small style="color:#64748b;">10% de desconto em qualquer pedido (Uso único).</small>
             </div>
             <span style="color:#6b21a8; font-weight:bold; font-size:0.85rem;">USAR →</span>
         </div>
@@ -706,7 +629,6 @@ function processCouponCode(code) {
         return;
     }
 
-    // Chave única no localStorage por cupom para controle inteligente
     let storageKey = 'used_coupon_' + code;
     let isAlreadyUsed = localStorage.getItem(storageKey);
 
@@ -860,19 +782,10 @@ function editCartItem(name) {
 
 function getProductBaseData(name) {
     const database = {
-        'Açaí Tradicional 300ml': { name: 'Açaí Tradicional 300ml', price: 14.00, desc: 'Açaí puro batido na hora, granola crocante, leite condensado e paçoca triturada.', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQbgI45sBDYlMB5T4LSEd3PqBpx3lA0Zki9NFlTNwGaQg&s=10' },
-        'Açaí Premium 500ml': { name: 'Açaí Premium 500ml', price: 20.00, desc: 'Açaí cremoso de alta qualidade, morango fresco, banana, leite ninho em pó e calda especial de chocolate.', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQbgI45sBDYlMB5T4LSEd3PqBpx3lA0Zki9NFlTNwGaQg&s=10' },
-        'Copo Fit 300ml': { name: 'Copo Fit 300ml', price: 18.00, desc: 'Açaí zero açúcar, dose de whey protein, pasta de amendoim integral e chia.', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQbgI45sBDYlMB5T4LSEd3PqBpx3lA0Zki9NFlTNwGaQg&s=10' },
-        'Barca Família (1 Litro)': { name: 'Barca Família (1 Litro)', price: 45.00, desc: 'Festival completo de sabores: Nutella, frutas frescas da estação, leite em pó, confeitos e biscoitos.', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-diXnUOwberLe5W1gM3j3E005GTrwqiue0I4EbEwR0Q&s=10' },
-        'Adicional de Nutella': { name: 'Adicional de Nutella', price: 6.00, desc: 'Porção generosa e exclusiva de creme de avelã original Nutella.', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSoB6fdoPLj0Ok1_nM56I6V62rrHU9iTxWLeSTBIOeX8g&s=10' },
-        'Refrigerante Lata 350ml': { name: 'Refrigerante Lata 350ml', price: 6.00, desc: 'Lata gelada de 350ml (Coca-Cola, Guaraná Antarctica ou Sprite).', img: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500' }
+        'Açaí na Garrafa 300ml': { name: 'Açaí na Garrafa 300ml', price: 15.00, desc: 'Açaí, leite condensado, leite em pó, banana, paçoca', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAO0nleaLNXtkNpbe-8TdWGA2QkXhobYaUCIM0w0o_Z3dkQSK-pMmTosc&s=10' },
+        'Açaí na Garrafa 500ml': { name: 'Açaí na Garrafa 500ml', price: 20.00, desc: 'Açaí, leite condensado, leite em pó, banana, paçoca', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAO0nleaLNXtkNpbe-8TdWGA2QkXhobYaUCIM0w0o_Z3dkQSK-pMmTosc&s=10' }
     };
-    for (let key in database) {
-        if (name.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(name.toLowerCase())) {
-            return database[key];
-        }
-    }
-    return { name: name, price: 10.00, desc: 'Produto artesanal do cardápio.', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQbgI45sBDYlMB5T4LSEd3PqBpx3lA0Zki9NFlTNwGaQg&s=10' };
+    return database[name] || { name: name, price: 15.00, desc: 'Açaí, leite condensado, leite em pó, banana, paçoca', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAO0nleaLNXtkNpbe-8TdWGA2QkXhobYaUCIM0w0o_Z3dkQSK-pMmTosc&s=10' };
 }
 
 function increaseCartQty(index) {
@@ -916,7 +829,6 @@ function selectPaymentOption(method, cardElement) {
     });
     cardElement.classList.add('selected');
 
-    // Mostra input de troco se for Dinheiro
     let changeContainer = document.getElementById('change-container');
     if (method === 'Dinheiro') {
         changeContainer.style.display = 'block';
@@ -953,7 +865,6 @@ function checkoutWhatsApp() {
         }
         message += `%0A🏷️ *Cupom Aplicado:* ${activeCoupon.code} (-${formatPrice(discountVal)})`;
         
-        // Marca o cupom como usado permanentemente no localStorage do cliente para evitar reuso
         localStorage.setItem('used_coupon_' + activeCoupon.code, 'true');
     }
 
@@ -962,7 +873,6 @@ function checkoutWhatsApp() {
 
     message += `%0A%0A💳 *FORMA DE PAGAMENTO:* ${selectedPayment}`;
 
-    // Se for dinheiro, calcula o troco e exibe formatado
     if (selectedPayment === 'Dinheiro') {
         let changeVal = parseFloat(document.getElementById('change-input').value);
         if (!isNaN(changeVal) && changeVal > 0) {
@@ -983,30 +893,6 @@ function checkoutWhatsApp() {
     let phone = "5511954962246";
     let url = `https://wa.me/${phone}?text=${message}`;
     window.open(url, '_blank');
-}
-
-function filterCategory(cat, btn) {
-    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    let items = document.querySelectorAll('.menu-item');
-    let titles = document.querySelectorAll('.category-title');
-
-    items.forEach(item => {
-        if (cat === 'all' || item.getAttribute('data-cat') === cat) {
-            item.style.display = 'flex';
-        } else {
-            item.style.display = 'none';
-        }
-    });
-
-    titles.forEach(title => {
-        if (cat === 'all' || title.getAttribute('data-cat') === cat) {
-            title.style.display = 'block';
-        } else {
-            title.style.display = 'none';
-        }
-    });
 }
 
 function searchProducts() {

@@ -72,6 +72,31 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
     font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
+/* Subtítulo Elegante Abaixo do Header */
+.store-subtitle {
+    background: linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%);
+    color: #f3e8ff;
+    text-align: center;
+    padding: 12px 20px 16px 20px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.5;
+    box-shadow: 0 4px 12px rgba(107, 33, 168, 0.15);
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+    position: sticky;
+    top: 91px; /* Fica logo abaixo do header sticky */
+    z-index: 999;
+    animation: fadeIn 0.4s ease-in-out;
+}
+.store-subtitle span {
+    display: block;
+    font-size: 0.8rem;
+    opacity: 0.9;
+    margin-top: 2px;
+    font-style: italic;
+}
+
 .container { max-width: 600px; margin: 0 auto; padding: 15px; }
 
 .category-title {
@@ -331,6 +356,12 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
     </div>
 </header>
 
+<!-- Subtítulo Elegante -->
+<div class="store-subtitle">
+    Sabor, qualidade e carinho 💜
+    <span>A melhor forma de se refrescar no verão.</span>
+</div>
+
 <div class="container">
     <input type="text" id="search-input" onkeyup="searchProducts()" style="width:100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 15px; outline:none;" placeholder="Pesquisar no cardápio...">
 
@@ -338,8 +369,8 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
         <!-- Categoria Garrafas -->
         <div class="category-title">Açaí na Garrafa</div>
         
-        <div class="menu-item" data-name="acai na garrafa 300ml" onclick="openDetail('Açaí na Garrafa 300ml', 15.00, 'Açaí, leite condensado, leite em pó, banana, paçoca', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAO0nleaLNXtkNpbe-8TdWGA2QkXhobYaUCIM0w0o_Z3dkQSK-pMmTosc&s=10')">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAO0nleaLNXtkNpbe-8TdWGA2QkXhobYaUCIM0w0o_Z3dkQSK-pMmTosc&s=10" class="item-img" alt="Açaí na Garrafa 300ml">
+        <div class="menu-item" data-name="acai na garrafa 300ml" onclick="openDetail('Açaí na Garrafa 300ml', 15.00, 'Açaí, leite condensado, leite em pó, banana, paçoca', 'https://lh3.googleusercontent.com/d/1W228uG49aaAdWHN4cbylvJz7Q5rhTjIN=s1000')">
+            <img src="https://lh3.googleusercontent.com/d/1W228uG49aaAdWHN4cbylvJz7Q5rhTjIN=s1000" class="item-img" alt="Açaí na Garrafa 300ml">
             <div class="item-info">
                 <h3>Açaí na Garrafa 300ml</h3>
                 <p>Açaí, leite condensado, leite em pó, banana, paçoca</p>
@@ -350,8 +381,8 @@ body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; }
             </div>
         </div>
 
-        <div class="menu-item" data-name="acai na garrafa 500ml" onclick="openDetail('Açaí na Garrafa 500ml', 20.00, 'Açaí, leite condensado, leite em pó, banana, paçoca', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAO0nleaLNXtkNpbe-8TdWGA2QkXhobYaUCIM0w0o_Z3dkQSK-pMmTosc&s=10')">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAO0nleaLNXtkNpbe-8TdWGA2QkXhobYaUCIM0w0o_Z3dkQSK-pMmTosc&s=10" class="item-img" alt="Açaí na Garrafa 500ml">
+        <div class="menu-item" data-name="acai na garrafa 500ml" onclick="openDetail('Açaí na Garrafa 500ml', 20.00, 'Açaí, leite condensado, leite em pó, banana, paçoca', 'https://lh3.googleusercontent.com/d/1W228uG49aaAdWHN4cbylvJz7Q5rhTjIN=s1000')">
+            <img src="https://lh3.googleusercontent.com/d/1W228uG49aaAdWHN4cbylvJz7Q5rhTjIN=s1000" class="item-img" alt="Açaí na Garrafa 500ml">
             <div class="item-info">
                 <h3>Açaí na Garrafa 500ml</h3>
                 <p>Açaí, leite condensado, leite em pó, banana, paçoca</p>
@@ -814,10 +845,10 @@ function editCartItem(index) {
 
 function getProductBaseData(name) {
     const database = {
-        'Açaí na Garrafa 300ml': { name: 'Açaí na Garrafa 300ml', price: 15.00, desc: 'Açaí, leite condensado, leite em pó, banana, paçoca', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAO0nleaLNXtkNpbe-8TdWGA2QkXhobYaUCIM0w0o_Z3dkQSK-pMmTosc&s=10' },
-        'Açaí na Garrafa 500ml': { name: 'Açaí na Garrafa 500ml', price: 20.00, desc: 'Açaí, leite condensado, leite em pó, banana, paçoca', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAO0nleaLNXtkNpbe-8TdWGA2QkXhobYaUCIM0w0o_Z3dkQSK-pMmTosc&s=10' }
+        'Açaí na Garrafa 300ml': { name: 'Açaí na Garrafa 300ml', price: 15.00, desc: 'Açaí, leite condensado, leite em pó, banana, paçoca', img: 'https://lh3.googleusercontent.com/d/1W228uG49aaAdWHN4cbylvJz7Q5rhTjIN=s1000' },
+        'Açaí na Garrafa 500ml': { name: 'Açaí na Garrafa 500ml', price: 20.00, desc: 'Açaí, leite condensado, leite em pó, banana, paçoca', img: 'https://lh3.googleusercontent.com/d/1W228uG49aaAdWHN4cbylvJz7Q5rhTjIN=s1000' }
     };
-    return database[name] || { name: name, price: 15.00, desc: 'Açaí, leite condensado, leite em pó, banana, paçoca', img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSAO0nleaLNXtkNpbe-8TdWGA2QkXhobYaUCIM0w0o_Z3dkQSK-pMmTosc&s=10' };
+    return database[name] || { name: name, price: 15.00, desc: 'Açaí, leite condensado, leite em pó, banana, paçoca', img: 'https://lh3.googleusercontent.com/d/1W228uG49aaAdWHN4cbylvJz7Q5rhTjIN=s1000' };
 }
 
 function increaseCartQty(index) {

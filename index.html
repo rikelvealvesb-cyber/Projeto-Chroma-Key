@@ -1,1019 +1,288 @@
-<!DOCTYPE html> 
-<html lang="pt-BR"> 
-<head> 
-<meta charset="UTF-8"> 
-<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-<title>Açaí da 24 FB - Cardápio Digital</title> 
-<style> 
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; } 
-body { background-color: #f8fafc; color: #1e293b; padding-bottom: 30px; } 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bíblia Sagrada 3D Online</title>
+    <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            background: radial-gradient(circle, #2c2c2c 0%, #111 100%); 
+            height: 100vh; 
+            width: 100vw;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            overflow: hidden; 
+            font-family: 'Georgia', serif; 
+            position: fixed;
+        }
 
-/* Animações Globais */ 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } } 
-@keyframes scaleUp { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } } 
-@keyframes pulseCart { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } } 
-@keyframes floatOffline { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } } 
-.pulse { animation: pulseCart 0.3s ease-in-out; } 
+        #nav-panel { 
+            position: fixed; 
+            top: 15px; 
+            background: rgba(20, 20, 20, 0.95); 
+            padding: 10px 15px; 
+            border-radius: 8px; 
+            z-index: 1000; 
+            display: flex; 
+            gap: 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.8);
+            border: 1px solid #444;
+            max-width: 95vw;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
 
-/* Header Profissional Aprimorado (Logo e Nome Aumentados) */ 
-.header { 
-    background: linear-gradient(135deg, #581c87 0%, #6b21a8 50%, #7e22ce 100%); 
-    color: white; 
-    padding: 24px 20px 22px 20px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: space-between; 
-    position: sticky; 
-    top: 0; 
-    z-index: 1000; 
-    box-shadow: 0 4px 20px rgba(107, 33, 168, 0.25); 
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
-} 
-.header-left { 
-    display: flex; 
-    align-items: center; 
-    gap: 16px; 
-} 
-.logo-img { 
-    width: 68px; 
-    height: 68px; 
-    border-radius: 50%; 
-    border: 2px solid rgba(255, 255, 255, 0.9); 
-    object-fit: cover; 
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
-    transition: transform 0.3s; 
-    flex-shrink: 0;
-} 
-.logo-img:hover { 
-    transform: scale(1.05); 
-} 
-.header-info h1 { 
-    font-size: 1.35rem; 
-    margin-bottom: 2px; 
-    font-weight: 800; 
-    letter-spacing: -0.3px; 
-} 
-.header-status { 
-    display: flex; 
-    align-items: center; 
-    gap: 6px; 
-    font-size: 0.8rem; 
-    opacity: 0.95; 
-} 
-.status-dot { 
-    width: 8px; 
-    height: 8px; 
-    background-color: #4ade80; 
-    border-radius: 50%; 
-    box-shadow: 0 0 8px #4ade80; 
-} 
-.header-actions { 
-    display: flex; 
-    gap: 10px; 
-    align-items: center; 
-} 
-.icon-btn { 
-    background: rgba(255, 255, 255, 0.15); 
-    border: 1px solid rgba(255, 255, 255, 0.2); 
-    width: 42px; 
-    height: 42px; 
-    border-radius: 50%; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    cursor: pointer; 
-    position: relative; 
-    transition: all 0.2s; 
-} 
-.icon-btn:hover { 
-    background: rgba(255, 255, 255, 0.25); 
-} 
-.icon-btn:active { 
-    transform: scale(0.9); 
-} 
-.top-icon { 
-    width: 20px; 
-    height: 20px; 
-    filter: brightness(0) invert(1); 
-} 
-.badge { 
-    position: absolute; 
-    top: -4px; 
-    right: -4px; 
-    background: #ffffff; 
-    color: #6b21a8; 
-    font-size: 0.65rem; 
-    width: 18px; 
-    height: 18px; 
-    border-radius: 50%; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    font-weight: bold; 
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
-} 
+        #nav-panel select, #nav-panel button {
+            padding: 6px 10px;
+            background: #2c2c2c;
+            color: #d4af37;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-family: 'Georgia', serif;
+            outline: none;
+            cursor: pointer;
+        }
 
-.container { max-width: 600px; margin: 0 auto; padding: 15px; } 
-.category-title { font-size: 1.1rem; color: #1e293b; margin: 20px 0 10px 0; font-weight: bold; animation: fadeIn 0.4s ease-in-out; } 
+        #nav-panel button {
+            background: #5c1d1d;
+            border-color: #7a2828;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
 
-/* Itens do Cardápio */ 
-.menu-item { background: white; border-radius: 12px; padding: 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.2s ease; animation: fadeIn 0.3s ease-in-out; } 
-.menu-item:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(107, 33, 168, 0.1); } 
-.menu-item:active { transform: scale(0.97); } 
-.item-img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; background: #e2e8f0; flex-shrink: 0; } 
-.item-info { flex: 1; } 
-.item-info h3 { font-size: 0.95rem; margin-bottom: 4px; color: #0f172a; } 
-.item-info p { font-size: 0.75rem; color: #64748b; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; } 
-.price-row { display: flex; justify-content: space-between; align-items: center; } 
-.price { font-weight: bold; color: #6b21a8; font-size: 0.95rem; } 
-.add-btn { background: #6b21a8; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: transform 0.1s, background 0.2s; } 
-.add-btn:hover { background: #581c87; } 
-.add-btn:active { transform: scale(0.9); } 
+        #nav-panel button:hover {
+            background: #7a2828;
+        }
 
-/* Telas (Detalhes, Carrinho, Cupons, etc) */ 
-.screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 2000; flex-direction: column; animation: fadeIn 0.25s ease-in-out; } 
-.screen-header { background: #6b21a8; color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px; font-size: 1.1rem; font-weight: bold; } 
-.back-arrow { cursor: pointer; font-size: 1.3rem; transition: transform 0.2s; } 
-.back-arrow:hover { transform: translateX(-3px); } 
-.screen-body { flex: 1; overflow-y: auto; padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; } 
+        /* Palco 3D imitando a mesa com leve volume */
+        #book-container {
+            perspective: 2500px;
+            margin-top: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform: rotateX(12deg);
+            transform-style: preserve-3d;
+            width: 100%;
+            height: 75vh;
+        }
 
-/* Detalhes do Produto */ 
-.detail-img-container { width: 100%; height: 250px; border-radius: 12px; background: #1e293b; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow: hidden; } 
-.detail-img { width: 100%; height: 100%; object-fit: contain; } 
-.detail-title { font-size: 1.4rem; color: #0f172a; margin-bottom: 8px; font-weight: bold; } 
-.detail-price { font-size: 1.3rem; color: #6b21a8; font-weight: bold; margin-bottom: 15px; } 
-.detail-desc { color: #475569; font-size: 0.95rem; margin-bottom: 20px; line-height: 1.6; } 
-.quantity-selector { display: flex; align-items: center; justify-content: space-between; background: white; padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); } 
-.qty-btn { background: #e2e8f0; border: none; width: 32px; height: 32px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: background 0.2s; } 
-.qty-btn:hover { background: #cbd5e1; } 
-#detail-qty { font-size: 1.1rem; font-weight: bold; color: #1e293b; } 
-.obs-container { margin-bottom: 25px; } 
-.obs-container label { display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px; } 
-.obs-textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-size: 0.9rem; resize: none; height: 70px; background: white; } 
-.obs-textarea:focus { border-color: #6b21a8; } 
+        #book { 
+            box-shadow: 0 35px 70px rgba(0,0,0,0.9), 0 0 30px rgba(0,0,0,0.5);
+            display: none;
+        }
 
-/* Itens do Carrinho */ 
-.cart-item { background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start; box-shadow: 0 1px 3px rgba(0,0,0,0.05); animation: fadeIn 0.3s ease-in-out; } 
-.cart-item-clickable { cursor: pointer; flex: 1; padding-right: 10px; min-width: 0; transition: opacity 0.2s; } 
-.cart-item-clickable:hover { opacity: 0.8; } 
-.cart-obs-text { color: #475569; font-size: 0.8rem; margin-top: 4px; line-height: 1.3; background: #f8fafc; padding: 6px 8px; border-radius: 6px; border-left: 3px solid #6b21a8; word-break: break-word; overflow-wrap: break-word; } 
-.cart-right-section { display: flex; align-items: center; gap: 8px; flex-shrink: 0; } 
-.cart-qty-controls { display: flex; align-items: center; gap: 8px; background: #f1f5f9; padding: 4px 8px; border-radius: 6px; } 
-.cart-qty-btn { background: none; border: none; font-weight: bold; font-size: 0.9rem; cursor: pointer; color: #6b21a8; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; } 
-.cart-qty-btn:hover { background: #e2e8f0; border-radius: 4px; } 
-.cart-footer-bar { background: white; padding: 15px 20px; border-top: 1px solid #e2e8f0; box-shadow: 0 -4px 10px rgba(0,0,0,0.05); } 
-.checkout-btn { background: #25d366; color: white; border: none; width: 100%; max-width: 600px; margin: 0 auto; display: block; padding: 14px; border-radius: 30px; font-size: 1rem; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; transition: transform 0.2s, background 0.2s; } 
-.checkout-btn:hover { background: #20ba5a; transform: translateY(-2px); } 
-.checkout-btn:active { transform: scale(0.98); } 
-.remove-item-btn { background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: transform 0.2s, background 0.2s; margin-left: 8px; } 
-.remove-item-btn:hover { background: #dc2626; } 
-.remove-item-btn:active { transform: scale(0.85); } 
+        /* Textura e estilo realista das páginas */
+        .page {
+            background-color: #fbf8ef;
+            background-image: linear-gradient(to right, #d3cbb7 0%, #fbf8ef 4%, #fbf8ef 96%, #d3cbb7 100%);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 1px solid #c5bba4;
+            overflow: hidden;
+            user-select: none;
+        }
 
-/* Cupons */ 
-.coupon-section { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); } 
-.coupon-input-group { display: flex; gap: 8px; margin-top: 8px; } 
-.coupon-input { flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; font-size: 0.9rem; text-transform: uppercase; } 
-.coupon-input:focus { border-color: #6b21a8; } 
-.coupon-card { background: white; border: 2px dashed #6b21a8; padding: 15px; border-radius: 10px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s; cursor: pointer; } 
-.coupon-card:hover { transform: scale(1.02); } 
-.cart-available-coupons { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; margin-top: 8px; } 
-.cart-available-coupons::-webkit-scrollbar { display: none; } 
-.mini-coupon-tag { background: #f3e8ff; border: 1px dashed #7e22ce; color: #6b21a8; padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; white-space: nowrap; cursor: pointer; transition: background 0.2s; } 
-.mini-coupon-tag:hover { background: #e9d5ff; } 
+        .page-cover {
+            background-color: #3a1010;
+            background-image: linear-gradient(135deg, #5c1d1d 0%, #220808 100%);
+            color: #d4af37;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 25px;
+            border: 2px solid #1a0505;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.7);
+        }
 
-/* Dialog Personalizado de Pagamento */ 
-#payment-dialog-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); z-index: 4000; justify-content: center; align-items: center; animation: fadeIn 0.2s ease-in-out; padding: 20px; } 
-.payment-dialog-box { background: white; width: 100%; max-width: 400px; border-radius: 20px; padding: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: scaleUp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); } 
-.payment-dialog-title { font-size: 1.2rem; font-weight: bold; color: #0f172a; margin-bottom: 6px; text-align: center; } 
-.payment-dialog-subtitle { font-size: 0.85rem; color: #64748b; text-align: center; margin-bottom: 20px; } 
-.payment-options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; } 
-.payment-option-card { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; transition: all 0.2s; background: #f8fafc; } 
-.payment-option-card:hover { border-color: #cbd5e1; background: #f1f5f9; } 
-.payment-option-card.selected { border-color: #6b21a8; background: #f3e8ff; } 
-.payment-option-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-shrink: 0; } 
-.payment-option-icon svg { width: 22px; height: 22px; } 
-.payment-option-info { flex: 1; } 
-.payment-option-name { font-weight: bold; font-size: 0.95rem; color: #1e293b; } 
-.payment-option-desc { font-size: 0.75rem; color: #64748b; } 
+        .page h2 { 
+            font-size: 1rem; 
+            color: #5c1d1d; 
+            margin-bottom: 10px; 
+            border-bottom: 1px solid #d3cbb7; 
+            padding-bottom: 5px; 
+        }
 
-/* Troco em Dinheiro */ 
-#change-container { display: none; background: #f1f5f9; padding: 12px; border-radius: 10px; margin-bottom: 15px; animation: fadeIn 0.2s ease-in-out; } 
-#change-container label { display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 5px; } 
-#change-input { width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; font-size: 0.9rem; background: white; } 
-#change-input:focus { border-color: #6b21a8; } 
-.payment-dialog-actions { display: flex; gap: 10px; } 
-.dialog-btn-cancel { flex: 1; background: #e2e8f0; border: none; padding: 12px; border-radius: 10px; font-weight: bold; color: #475569; cursor: pointer; transition: background 0.2s; } 
-.dialog-btn-cancel:hover { background: #cbd5e1; } 
-.dialog-btn-confirm { flex: 1; background: #25d366; border: none; padding: 12px; border-radius: 10px; font-weight: bold; color: white; cursor: pointer; transition: background 0.2s; } 
-.dialog-btn-confirm:hover { background: #20ba5a; } 
+        .page p { 
+            font-size: 0.78rem; 
+            line-height: 1.5; 
+            text-align: justify; 
+            margin-bottom: 6px; 
+        }
 
-/* Rodapé */ 
-.site-footer { text-align: center; padding: 25px 15px 15px 15px; margin-top: 20px; color: #64748b; font-size: 0.85rem; border-top: 1px solid #e2e8f0; } 
-.site-footer a { color: #6b21a8; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; transition: opacity 0.2s; } 
-.site-footer a:hover { opacity: 0.8; } 
+        .page p span { 
+            font-size: 0.62rem; 
+            color: #8c7b60; 
+            font-weight: bold; 
+            margin-right: 4px; 
+        }
 
-/* Tela de Sem Conexão */ 
-#offline-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; color: white; animation: fadeIn 0.3s ease-in-out; } 
-.offline-icon { width: 80px; height: 80px; margin-bottom: 20px; animation: floatOffline 2s ease-in-out infinite; } 
-.offline-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; } 
-.offline-desc { font-size: 0.95rem; color: #94a3b8; max-width: 320px; margin-bottom: 25px; line-height: 1.5; } 
-.reconnect-spinner { width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid #ffffff; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; } 
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } 
+        .page-footer { 
+            text-align: center; 
+            font-size: 0.65rem; 
+            color: #888; 
+            border-top: 1px solid #e8e2d0;
+            padding-top: 6px;
+        }
 
-/* Toast */ 
-#toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #1e293b; color: white; padding: 12px 24px; border-radius: 30px; font-size: 0.9rem; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease; opacity: 0; z-index: 3000; pointer-events: none; } 
-#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; } 
-</style> 
-</head> 
-<body> 
+        #loading {
+            color: #d4af37;
+            font-size: 1.1rem;
+            position: absolute;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
 
-<!-- Header Profissional --> 
-<header class="header"> 
-    <div class="header-left"> 
-        <img src="https://lh3.googleusercontent.com/d/1Pvks1i-Wx637SyfejAIfuI4vbQscha02=s1000" alt="Logo" class="logo-img"> 
-        <div class="header-info"> 
-            <h1>Açaí da 24 FB</h1> 
-            <div class="header-status"> 
-                <span class="status-dot"></span> 
-                <span>Aberto • Entrega rápida</span> 
-            </div> 
-        </div> 
-    </div> 
-    <div class="header-actions"> 
-        <!-- Ícone de Pedido Recente (Repetir Pedido) -->
-        <button class="icon-btn" onclick="openScreenWithHistory('recent-order-screen'); loadRecentOrderUI();" title="Meu Pedido Recente"> 
-            <svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> 
-                <circle cx="12" cy="12" r="10"></circle> 
-                <polyline points="12 6 12 12 16 14"></polyline> 
-            </svg> 
-        </button> 
-
-        <button class="icon-btn" onclick="openScreenWithHistory('coupon-screen')" title="Cupons"> 
-            <svg class="top-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> 
-                <path d="M21 10V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2a2 2 0 0 1 0 4v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2a2 2 0 0 1 0-4z"></path> 
-                <line x1="9" y1="9" x2="15" y2="15"></line> 
-                <circle cx="12" cy="12" r="1"></circle> 
-            </svg> 
-        </button> 
-        <button class="icon-btn" onclick="openScreenWithHistory('cart-screen')" id="cart-icon-btn" title="Carrinho"> 
-            <img src="https://cdn-icons-png.flaticon.com/512/1170/1170678.png" alt="Carrinho" class="top-icon"> 
-            <span class="badge" id="cart-count">0</span> 
-        </button> 
-    </div> 
-</header> 
-
-<div class="container"> 
-    <input type="text" id="search-input" onkeyup="searchProducts()" style="width:100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 15px; outline:none;" placeholder="Pesquisar no cardápio..."> 
-    
-    <div id="product-list"> 
-        <!-- Categoria Garrafas --> 
-        <div class="category-title">Açaí na Garrafa</div> 
-        <div class="menu-item" data-name="acai na garrafa 300ml" onclick="openDetail('Açaí na Garrafa 300ml', 15.00, 'Açaí, leite condensado, leite em pó, banana, paçoca', 'https://lh3.googleusercontent.com/d/1YPOIvfdImifipeNB4OKnIUSTQ0S_Bkol=s1000')"> 
-            <img src="https://lh3.googleusercontent.com/d/1YPOIvfdImifipeNB4OKnIUSTQ0S_Bkol=s1000" class="item-img" alt="Açaí na Garrafa 300ml"> 
-            <div class="item-info"> 
-                <h3>Açaí na Garrafa 300ml</h3> 
-                <p>Açaí, leite condensado, leite em pó, banana, paçoca</p> 
-                <div class="price-row"> 
-                    <span class="price">R$ 15,00</span> 
-                    <button class="add-btn" onclick="event.stopPropagation(); addToCart('Açaí na Garrafa 300ml', 15.00, 1, '')">Adicionar</button> 
-                </div> 
-            </div> 
-        </div> 
-
-        <div class="menu-item" data-name="acai na garrafa 500ml" onclick="openDetail('Açaí na Garrafa 500ml', 20.00, 'Açaí, leite condensado, leite em pó, banana, paçoca', 'https://lh3.googleusercontent.com/d/1YPOIvfdImifipeNB4OKnIUSTQ0S_Bkol=s1000')"> 
-            <img src="https://lh3.googleusercontent.com/d/1YPOIvfdImifipeNB4OKnIUSTQ0S_Bkol=s1000" class="item-img" alt="Açaí na Garrafa 500ml"> 
-            <div class="item-info"> 
-                <h3>Açaí na Garrafa 500ml</h3> 
-                <p>Açaí, leite condensado, leite em pó, banana, paçoca</p> 
-                <div class="price-row"> 
-                    <span class="price">R$ 20,00</span> 
-                    <button class="add-btn" onclick="event.stopPropagation(); addToCart('Açaí na Garrafa 500ml', 20.00, 1, '')">Adicionar</button> 
-                </div> 
-            </div> 
-        </div> 
-    </div> 
-
-    <!-- Rodapé --> 
-    <footer class="site-footer"> 
-        <p>&copy; 2026 Açaí da 24 FB. Todos os direitos reservados.</p> 
-        <a href="https://www.instagram.com/acai_24_fb?igsh=MWMxeWs1cjVnbGkyOQ==" target="_blank"> 
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Siga-nos no Instagram (@acai_24_fb) 
-        </a> 
-    </footer> 
-</div> 
-
-<!-- Tela de Detalhes do Produto --> 
-<div id="detail-screen" class="screen"> 
-    <div class="screen-header"> 
-        <span class="back-arrow" onclick="goBack()">←</span> 
-        <span>Detalhes do Produto</span> 
-    </div> 
-    <div class="screen-body"> 
-        <div class="detail-img-container"> 
-            <img id="detail-img" src="" class="detail-img"> 
-        </div> 
-        <h2 id="detail-title" class="detail-title"></h2> 
-        <div id="detail-price" class="detail-price"></div> 
-        <p id="detail-desc" class="detail-desc"></p> 
-        <div class="quantity-selector"> 
-            <span style="font-weight: 600; color: #475569;">Quantidade:</span> 
-            <div style="display: flex; align-items: center; gap: 15px;"> 
-                <button class="qty-btn" onclick="changeDetailQty(-1)">-</button> 
-                <span id="detail-qty">1</span> 
-                <button class="qty-btn" onclick="changeDetailQty(1)">+</button> 
-            </div> 
-        </div> 
-        <div class="obs-container"> 
-            <label for="detail-obs">Observações do pedido:</label> 
-            <textarea id="detail-obs" class="obs-textarea" placeholder="Ex: Sem leite condensado, caprichar na paçoca..."></textarea> 
-        </div> 
-        <button id="detail-add-btn" class="checkout-btn" style="background:#6b21a8;">Salvar Alterações</button> 
-    </div> 
-</div> 
-
-<!-- Tela de Cupons --> 
-<div id="coupon-screen" class="screen"> 
-    <div class="screen-header"> 
-        <span class="back-arrow" onclick="goBack()">←</span> 
-        <span>Cupons Disponíveis</span> 
-    </div> 
-    <div class="screen-body"> 
-        <div class="coupon-section"> 
-            <label style="font-size: 0.9rem; font-weight: bold; color: #1e293b;">Possui um código de cupom?</label> 
-            <div class="coupon-input-group"> 
-                <input type="text" id="manual-coupon-input" class="coupon-input" placeholder="Digite o cupom (ex: ACAI10)"> 
-                <button class="apply-coupon-btn" onclick="applyTypedCoupon()" style="background:#6b21a8; color:white; border:none; padding:8px 14px; border-radius:8px; font-weight:bold; cursor:pointer;">Aplicar</button> 
-            </div> 
-        </div> 
-        <p style="font-size: 0.85rem; font-weight: bold; color: #64748b; margin-bottom: 12px;">OU ESCOLHA DA LISTA:</p> 
-        <div class="coupon-card" onclick="selectCouponAndApply('PRIMEIRAPEDIDO')"> 
-            <div> 
-                <strong>PRIMEIRAPEDIDO</strong><br> 
-                <small style="color:#64748b;">Ganhe R$ 5,00 de desconto na primeira compra (Uso único).</small> 
-            </div> 
-            <span style="color:#6b21a8; font-weight:bold; font-size:0.85rem;">USAR →</span> 
-        </div> 
-        <div class="coupon-card" onclick="selectCouponAndApply('ACAI10')"> 
-            <div> 
-                <strong>ACAI10</strong><br> 
-                <small style="color:#64748b;">10% de desconto em qualquer pedido (Uso único).</small> 
-            </div> 
-            <span style="color:#6b21a8; font-weight:bold; font-size:0.85rem;">USAR →</span> 
-        </div> 
-    </div> 
-</div> 
-
-<!-- Tela Meu Pedido Recente -->
-<div id="recent-order-screen" class="screen">
-    <div class="screen-header">
-        <span class="back-arrow" onclick="goBack()">←</span>
-        <span>Meu Pedido Recente</span>
+    <div id="nav-panel">
+        <select id="select-book"></select>
+        <select id="select-chapter"></select>
+        <button onclick="buscarTextoBiblico()">Abrir</button>
     </div>
-    <div class="screen-body">
-        <div id="recent-order-content"></div>
-    </div>
-</div>
 
-<!-- Tela do Carrinho --> 
-<div id="cart-screen" class="screen"> 
-    <div class="screen-header"> 
-        <span class="back-arrow" onclick="goBack()">←</span> 
-        <span>Seu Carrinho</span> 
-    </div> 
-    <div class="screen-body"> 
-        <div class="coupon-section"> 
-            <label style="font-size: 0.85rem; font-weight: bold; color: #1e293b;">Cupom de Desconto (1 por pedido)</label> 
-            <div class="coupon-input-group"> 
-                <input type="text" id="cart-coupon-input" class="coupon-input" placeholder="Digite o código"> 
-                <button class="apply-coupon-btn" onclick="applyCartCoupon()" style="background:#6b21a8; color:white; border:none; padding:8px 14px; border-radius:8px; font-weight:bold; cursor:pointer;">Aplicar</button> 
-            </div> 
-            <div style="margin-top: 10px;"> 
-                <span style="font-size: 0.75rem; color: #64748b; font-weight: bold;">Cupons disponíveis (clique para usar):</span> 
-                <div class="cart-available-coupons"> 
-                    <div class="mini-coupon-tag" onclick="selectCouponAndApplyFromCart('PRIMEIRAPEDIDO')">🏷️ PRIMEIRAPEDIDO (-R$ 5)</div> 
-                    <div class="mini-coupon-tag" onclick="selectCouponAndApplyFromCart('ACAI10')">🏷️ ACAI10 (10% OFF)</div> 
-                </div> 
-            </div> 
-            <div id="applied-coupon-display" style="margin-top: 8px; font-size: 0.85rem; display: none;"></div> 
-        </div> 
-        <div id="cart-items-container"></div> 
-    </div> 
-    <div class="cart-footer-bar"> 
-        <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:0.95rem; color:#64748b;"> 
-            <span>Subtotal:</span> 
-            <span id="cart-subtotal">R$ 0,00</span> 
-        </div> 
-        <div id="discount-row" style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.95rem; color:#16a34a; display:none;"> 
-            <span>Desconto:</span> 
-            <span id="cart-discount-val">- R$ 0,00</span> 
-        </div> 
-        <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-weight:bold; font-size:1.1rem;"> 
-            <span>Total:</span> 
-            <span id="cart-total" style="color:#6b21a8;">R$ 0,00</span> 
-        </div> 
-        <button class="checkout-btn" onclick="openPaymentDialog()">Escolher Pagamento & Finalizar</button> 
-    </div> 
-</div> 
+    <div id="loading">Conectando à Bíblia online...</div>
 
-<!-- Tela de Pagamento Pix -->
-<div id="order-status-screen" class="screen">
-    <div class="screen-header">
-        <span class="back-arrow" onclick="goBack()">←</span>
-        <span>Pagamento Pix & Envio</span>
-    </div>
-    <div class="screen-body" style="text-align: center;">
-        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 5px;">
-            <h3 style="color: #6b21a8; margin-bottom: 5px;">Pague com Pix</h3>
-            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 12px;">Copie o código abaixo, pague no aplicativo do seu banco e depois envie o comprovante.</p>
-            
-            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: left; font-size: 0.85rem; border: 1px solid #e2e8f0;">
-                <div style="font-weight: bold; color: #0f172a; margin-bottom: 4px;">Resumo do Pedido:</div>
-                <div id="pix-resumo-itens" style="color: #475569; max-height: 90px; overflow-y: auto; margin-bottom: 6px;"></div>
-                <div style="border-top: 1px dashed #cbd5e1; padding-top: 6px; display: flex; justify-content: space-between; font-weight: bold; color: #6b21a8;">
-                    <span>Total a Pagar:</span>
-                    <span id="pix-resumo-total">R$ 0,00</span>
+    <div id="book-container">
+        <div id="book">
+            <div class="page page-cover">
+                <div>
+                    <h1 style="font-size: 1.8rem; border-bottom: 2px solid #d4af37; padding-bottom: 8px; margin-bottom: 8px;">BÍBLIA SAGRADA</h1>
+                    <p style="font-size: 0.85rem; font-style: italic;">Carregando dados da rede...</p>
                 </div>
             </div>
-
-            <div style="margin-bottom: 15px;">
-                <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 5px;">Pix Copia e Cola:</label>
-                <input type="text" id="pix-copia-cola" readonly style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.8rem; background: #f1f5f9; text-align: center;" onclick="this.select()">
-                <button onclick="copyPixCode()" style="margin-top: 8px; background: #6b21a8; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: bold; cursor: pointer;">Copiar Chave Pix</button>
-            </div>
-
-            <div style="background: #fef08a; padding: 10px; border-radius: 8px; color: #854d0e; font-size: 0.8rem; margin-bottom: 15px;">
-                ⚠️ Após o pagamento, clique no botão abaixo para enviar o pedido e o comprovante pelo WhatsApp.
-            </div>
-
-            <button class="checkout-btn" onclick="checkoutWhatsAppWithPixReceipt()">Enviar Pedido & Comprovante no WhatsApp</button>
         </div>
     </div>
-</div>
 
-<!-- Diálogo de Forma de Pagamento --> 
-<div id="payment-dialog-overlay"> 
-    <div class="payment-dialog-box"> 
-        <div class="payment-dialog-title">Forma de Pagamento</div> 
-        <div class="payment-dialog-subtitle">Selecione como deseja pagar seu pedido:</div> 
-        <div class="payment-options-grid"> 
-            <div class="payment-option-card selected" onclick="selectPaymentOption('Pix', this)"> 
-                <div class="payment-option-icon" style="color: #059669;"> 
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 12l10 10 10-10L12 2z"/><path d="M12 8v8M8 12h8"/></svg> 
-                </div> 
-                <div class="payment-option-info"> 
-                    <div class="payment-option-name">Pix (Copia e Cola)</div> 
-                    <div class="payment-option-desc">Pague e envie o comprovante</div> 
-                </div> 
-            </div> 
-            <div class="payment-option-card" onclick="selectPaymentOption('Cartão de Crédito', this)"> 
-                <div class="payment-option-icon" style="color: #2563eb;"> 
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> 
-                </div> 
-                <div class="payment-option-info"> 
-                    <div class="payment-option-name">Cartão de Crédito</div> 
-                    <div class="payment-option-desc">Leva a maquininha até você</div> 
-                </div> 
-            </div> 
-            <div class="payment-option-card" onclick="selectPaymentOption('Cartão de Débito', this)"> 
-                <div class="payment-option-icon" style="color: #d97706;"> 
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><circle cx="12" cy="15" r="1"/></svg> 
-                </div> 
-                <div class="payment-option-info"> 
-                    <div class="payment-option-name">Cartão de Débito</div> 
-                    <div class="payment-option-desc">Pagamento na entrega</div> 
-                </div> 
-            </div> 
-            <div class="payment-option-card" onclick="selectPaymentOption('Dinheiro', this)"> 
-                <div class="payment-option-icon" style="color: #16a34a;"> 
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> 
-                </div> 
-                <div class="payment-option-info"> 
-                    <div class="payment-option-name">Dinheiro</div> 
-                    <div class="payment-option-desc">Troco necessário</div> 
-                </div> 
-            </div> 
-        </div> 
-        <div id="change-container"> 
-            <label for="change-input">Troco para quanto? (Ex: 50 ou deixe em branco se não precisar)</label> 
-            <input type="number" id="change-input" placeholder="Ex: 50.00"> 
-        </div> 
-        <div class="payment-dialog-actions"> 
-            <button class="dialog-btn-cancel" onclick="closePaymentDialog()">Cancelar</button> 
-            <button class="dialog-btn-confirm" onclick="confirmCheckout()">Continuar</button> 
-        </div> 
-    </div> 
-</div> 
+    <script>
+        let pageFlip = null;
 
-<!-- Tela Sem Conexão --> 
-<div id="offline-screen"> 
-    <svg class="offline-icon" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> 
-        <line x1="1" y1="1" x2="23" y2="23"></line> 
-        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path> 
-        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path> 
-        <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path> 
-        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path> 
-        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path> 
-        <line x1="12" y1="20" x2="12.01" y2="20"></line> 
-    </svg> 
-    <div class="offline-title">Você ficou sem internet!</div> 
-    <div class="offline-desc">Não se preocupe, estamos tentando reconectar você automaticamente...</div> 
-    <div class="reconnect-spinner"></div> 
-</div> 
+        // Estrutura de livros suportados pela API pública online
+        const bibliaEstrutura = {
+            "Gênesis": 50, "Êxodo": 40, "Levítico": 27, "Números": 36, "Deuteronômio": 34,
+            "Josué": 24, "Juízes": 21, "Rute": 4, "1 Samuel": 31, "2 Samuel": 24,
+            "1 Reis": 22, "2 Reis": 25, "Salmos": 150, "Provérbios": 31, "Isaías": 66,
+            "Mateus": 28, "Marcos": 16, "Lucas": 24, "João": 21, "Atos": 28, "Apocalipse": 22
+        };
 
-<!-- Toast --> 
-<div id="toast">Item adicionado com sucesso!</div> 
+        const apiBookMap = {
+            "Gênesis": "genesis", "Êxodo": "exodus", "Levítico": "leviticus", "Números": "numbers", "Deuteronômio": "deuteronomy",
+            "Josué": "joshua", "Juízes": "judges", "Rute": "ruth", "1 Samuel": "1samuel", "2 Samuel": "2samuel",
+            "1 Reis": "1kings", "2 Reis": "2kings", "Salmos": "psalms", "Provérbios": "proverbs", "Isaías": "isaiah",
+            "Mateus": "matthew", "Marcos": "mark", "Lucas": "luke", "João": "john", "Atos": "acts", "Apocalipse": "revelation"
+        };
 
-<script> 
-let cart = []; 
-let currentItemData = { name: '', price: 0, desc: '', img: '', qty: 1 }; 
-let activeCoupon = null; 
-let selectedPayment = 'Pix'; 
-let currentOpenScreen = null; 
-const validCoupons = { 
-    'PRIMEIRAPEDIDO': { type: 'fixed', value: 5.00, desc: 'R$ 5,00 de desconto' }, 
-    'ACAI10': { type: 'percent', value: 10, desc: '10% de desconto' } 
-}; 
+        const selectBook = document.getElementById('select-book');
+        const selectChapter = document.getElementById('select-chapter');
+        const loadingEl = document.getElementById('loading');
+        const bookEl = document.getElementById('book');
 
-window.history.replaceState({ screen: 'main' }, ''); 
-window.addEventListener('popstate', (event) => { 
-    let screens = document.querySelectorAll('.screen'); 
-    screens.forEach(s => s.style.display = 'none'); 
-    closePaymentDialog(); 
-    currentOpenScreen = null; 
-    if (event.state && event.state.screen && event.state.screen !== 'main') { 
-        let target = document.getElementById(event.state.screen); 
-        if (target) { 
-            target.style.display = 'flex'; 
-            currentOpenScreen = event.state.screen; 
-        } 
-    } 
-}); 
+        // Preenche o seletor de livros
+        for (let livro in bibliaEstrutura) {
+            let opt = document.createElement('option');
+            opt.value = livro;
+            opt.innerText = livro;
+            selectBook.appendChild(opt);
+        }
 
-function openScreenWithHistory(screenId) { 
-    if (currentOpenScreen === screenId) return; 
-    window.history.pushState({ screen: screenId }, ''); 
-    let screens = document.querySelectorAll('.screen'); 
-    screens.forEach(s => s.style.display = 'none'); 
-    document.getElementById(screenId).style.display = 'flex'; 
-    currentOpenScreen = screenId; 
-} 
+        // Atualiza os capítulos de acordo com o livro escolhido
+        selectBook.addEventListener('change', () => {
+            const total = bibliaEstrutura[selectBook.value] || 1;
+            selectChapter.innerHTML = '';
+            for (let i = 1; i <= total; i++) {
+                let opt = document.createElement('option');
+                opt.value = i;
+                opt.innerText = `Cap. ${i}`;
+                selectChapter.appendChild(opt);
+            }
+        });
 
-function goBack() { 
-    window.history.back(); 
-} 
+        selectBook.dispatchEvent(new Event('change'));
 
-window.addEventListener('online', () => { 
-    document.getElementById('offline-screen').style.display = 'none'; 
-    showToast('Conexão restabelecida com sucesso!'); 
-}); 
+        async function buscarTextoBiblico() {
+            loadingEl.style.display = 'block';
+            loadingEl.innerText = "Buscando dados da rede...";
+            bookEl.style.display = 'none';
 
-window.addEventListener('offline', () => { 
-    document.getElementById('offline-screen').style.display = 'flex'; 
-}); 
+            const livroPt = selectBook.value;
+            const livroApi = apiBookMap[livroPt] || "genesis";
+            const cap = selectChapter.value || 1;
 
-setInterval(() => { 
-    if (!navigator.onLine) { 
-        document.getElementById('offline-screen').style.display = 'flex'; 
-    } else { 
-        if (document.getElementById('offline-screen').style.display === 'flex') { 
-            document.getElementById('offline-screen').style.display = 'none'; 
-            showToast('Reconectado automaticamente!'); 
-        } 
-    } 
-}, 3000); 
+            try {
+                // Requisição HTTP via fetch para a API online
+                const resposta = await fetch(`https://bible-api.com/${livroApi}+${cap}`);
+                if (!resposta.ok) throw new Error("Erro na requisição da API");
 
-function applyTypedCoupon() { 
-    let code = document.getElementById('manual-coupon-input').value.trim().toUpperCase(); 
-    processCouponCode(code); 
-} 
+                const dados = await resposta.json();
+                renderizarLivro3D(dados.reference, dados.verses);
 
-function applyCartCoupon() { 
-    let code = document.getElementById('cart-coupon-input').value.trim().toUpperCase(); 
-    processCouponCode(code); 
-} 
+            } catch (erro) {
+                console.error("Erro de rede:", erro);
+                loadingEl.innerText = "Erro ao buscar dados da rede. Verifique a conexão.";
+            }
+        }
 
-function selectCouponAndApply(code) { 
-    processCouponCode(code); 
-    goBack(); 
-} 
+        function renderizarLivro3D(referencia, versiculos) {
+            bookEl.innerHTML = '';
 
-function selectCouponAndApplyFromCart(code) { 
-    processCouponCode(code); 
-} 
+            // Capa interna do livro
+            let capa = document.createElement('div');
+            capa.className = 'page page-cover';
+            capa.innerHTML = `<div><h2 style="color: #d4af37; font-size: 1.3rem; margin-bottom: 5px;">${referencia}</h2><p style="font-size:0.75rem; font-style: italic;">Santa Escritura</p></div>`;
+            bookEl.appendChild(capa);
 
-function processCouponCode(code) { 
-    if (!code) { 
-        showToast('Digite o nome de um cupom válido!'); 
-        return; 
-    } 
-    let storageKey = 'used_coupon_' + code; 
-    let isAlreadyUsed = localStorage.getItem(storageKey); 
-    if (isAlreadyUsed === 'true') { 
-        showToast('❌ Este cupom já foi utilizado neste dispositivo!'); 
-        return; 
-    } 
-    if (validCoupons[code]) { 
-        activeCoupon = { code: code, ...validCoupons[code] }; 
-        showToast('✅ Cupom "' + code + '" aplicado com sucesso!'); 
-        updateCartUI(); 
-    } else { 
-        showToast('❌ Cupom inválido ou expirado!'); 
-    } 
-} 
+            // Paginação dinâmica dos versículos vindos da rede
+            const porPagina = 6;
+            for (let i = 0; i < versiculos.length; i += porPagina) {
+                let pedaco = versiculos.slice(i, i + porPagina);
+                let pDiv = document.createElement('div');
+                pDiv.className = 'page';
+                
+                let htmlVersiculos = pedaco.map(v => `<p><span>${v.verse}</span> ${v.text}</p>`).join('');
+                pDiv.innerHTML = `<div><h2>${referencia}</h2>${htmlVersiculos}</div><div class="page-footer">${Math.floor(i/porPagina) + 1}</div>`;
+                bookEl.appendChild(pDiv);
+            }
 
-function removeCoupon() { 
-    activeCoupon = null; 
-    showToast('Cupom removido do pedido.'); 
-    updateCartUI(); 
-} 
+            loadingEl.style.display = 'none';
+            bookEl.style.display = 'block';
 
-let toastTimeout = null; 
-function showToast(message) { 
-    let toast = document.getElementById('toast'); 
-    toast.innerText = message; 
-    toast.classList.add('show'); 
-    if (toastTimeout) clearTimeout(toastTimeout); 
-    toastTimeout = setTimeout(() => { 
-        toast.classList.remove('show'); 
-    }, 2000); 
-} 
+            if (pageFlip) {
+                pageFlip.destroy();
+            }
 
-function pulseCartIcon() { 
-    let btn = document.getElementById('cart-icon-btn'); 
-    btn.classList.add('pulse'); 
-    setTimeout(() => { 
-        btn.classList.remove('pulse'); 
-    }, 300); 
-} 
+            // Motor gráfico 3D com animações suaves e sombras dinâmicas de folha
+            pageFlip = new St.PageFlip(bookEl, {
+                width: 340,
+                height: 480,
+                size: 'stretch',
+                minWidth: 260,
+                maxWidth: 500,
+                minHeight: 380,
+                maxHeight: 700,
+                flippingTime: 700,
+                maxShadowOpacity: 0.75, // Sombra 3D profunda ao virar a página
+                showCover: true,
+                mobileScrollSupport: true,
+                drawShadow: true,
+                usePortrait: true
+            });
 
-function formatPrice(value) { 
-    return 'R$ ' + value.toFixed(2).replace('.', ','); 
-} 
+            pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+        }
 
-function openDetail(name, price, desc, img, initialQty = 1, initialObs = '', editingIndex = -1) { 
-    currentItemData = { name, price, desc, img, qty: initialQty, editingIndex: editingIndex }; 
-    document.getElementById('detail-title').innerText = name; 
-    document.getElementById('detail-price').innerText = formatPrice(price); 
-    document.getElementById('detail-desc').innerText = desc; 
-    document.getElementById('detail-img').src = img; 
-    document.getElementById('detail-qty').innerText = initialQty; 
-    document.getElementById('detail-obs').value = initialObs; 
-    let addBtn = document.getElementById('detail-add-btn'); 
-    if (editingIndex > -1) { 
-        addBtn.innerText = "Salvar Alterações"; 
-    } else { 
-        addBtn.innerText = "Adicionar ao Carrinho"; 
-    } 
-    addBtn.onclick = function() { 
-        let obs = document.getElementById('detail-obs').value.trim(); 
-        if (currentItemData.editingIndex > -1) { 
-            let idx = currentItemData.editingIndex; 
-            cart[idx].quantity = currentItemData.qty; 
-            cart[idx].observation = obs; 
-            updateCartUI(); 
-            showToast("Item atualizado com sucesso!"); 
-        } else { 
-            addToCart(currentItemData.name, currentItemData.price, currentItemData.qty, obs); 
-        } 
-        goBack(); 
-    }; 
-    openScreenWithHistory('detail-screen'); 
-} 
-
-function changeDetailQty(amount) { 
-    currentItemData.qty += amount; 
-    if (currentItemData.qty < 1) { 
-        currentItemData.qty = 1; 
-    } 
-    document.getElementById('detail-qty').innerText = currentItemData.qty; 
-} 
-
-function addToCart(name, price, quantity = 1, observation = '') { 
-    let existingItem = cart.find(item => item.name === name && item.observation === observation); 
-    if (existingItem) { 
-        existingItem.quantity += quantity; 
-    } else { 
-        cart.push({ name: name, price: price, quantity: quantity, observation: observation }); 
-    } 
-    updateCartUI(); 
-    pulseCartIcon(); 
-    showToast(quantity + 'x ' + name + " adicionado!"); 
-} 
-
-function updateCartUI() { 
-    let totalCount = cart.reduce((sum, item) => sum + item.quantity, 0); 
-    document.getElementById('cart-count').innerText = totalCount; 
-    let container = document.getElementById('cart-items-container'); 
-    container.innerHTML = ''; 
-    let subtotalVal = 0; 
-    if (cart.length === 0) { 
-        container.innerHTML = '<p style="text-align:center; color:#64748b; margin-top:30px;">Seu carrinho está vazio.</p>'; 
-    } else { 
-        cart.forEach((item, index) => { 
-            let itemTotal = item.price * item.quantity; 
-            subtotalVal += itemTotal; 
-            let obsText = item.observation ? `<div class="cart-obs-text">Obs: ${item.observation}</div>` : ''; 
-            container.innerHTML += ` 
-                <div class="cart-item"> 
-                    <div class="cart-item-clickable" onclick="editCartItem(${index})"> 
-                        <strong>${item.name}</strong> ${obsText} 
-                        <small style="color:#64748b; display:block; margin-top:4px;">${formatPrice(item.price)} un. (Clique para editar)</small> 
-                    </div> 
-                    <div class="cart-right-section"> 
-                        <div class="cart-qty-controls"> 
-                            <button class="cart-qty-btn" onclick="decreaseCartQty(${index})">-</button> 
-                            <span style="font-size:0.85rem; font-weight:bold;">${item.quantity}</span> 
-                            <button class="cart-qty-btn" onclick="increaseCartQty(${index})">+</button> 
-                        </div> 
-                        <span style="font-weight:bold; color:#6b21a8; font-size:0.9rem; min-width:65px; text-align:right;">${formatPrice(itemTotal)}</span> 
-                        <button class="remove-item-btn" onclick="removeItem(${index})" title="Remover item">X</button> 
-                    </div> 
-                </div> 
-            `; 
-        }); 
-    } 
-    let discountVal = 0; 
-    let couponDisplay = document.getElementById('applied-coupon-display'); 
-    let discountRow = document.getElementById('discount-row'); 
-    if (activeCoupon) { 
-        if (activeCoupon.type === 'fixed') { 
-            discountVal = activeCoupon.value; 
-            if (discountVal > subtotalVal) discountVal = subtotalVal; 
-        } else if (activeCoupon.type === 'percent') { 
-            discountVal = (subtotalVal * activeCoupon.value) / 100; 
-        } 
-        couponDisplay.style.display = 'block'; 
-        couponDisplay.innerHTML = `<span style="color:#16a34a; font-weight:bold;">Cupom ativo: ${activeCoupon.code} (${activeCoupon.desc})</span> <a href="#" onclick="removeCoupon(); return false;" style="color:#ef4444; margin-left:8px; text-decoration:underline;">Remover</a>`; 
-        discountRow.style.display = 'flex'; 
-        document.getElementById('cart-discount-val').innerText = '- ' + formatPrice(discountVal); 
-    } else { 
-        couponDisplay.style.display = 'none'; 
-        discountRow.style.display = 'none'; 
-    } 
-    let totalVal = subtotalVal - discountVal; 
-    if (totalVal < 0) totalVal = 0; 
-    document.getElementById('cart-subtotal').innerText = formatPrice(subtotalVal); 
-    document.getElementById('cart-total').innerText = formatPrice(totalVal); 
-} 
-
-function editCartItem(index) { 
-    let item = cart[index]; 
-    let productData = getProductBaseData(item.name); 
-    openDetail(productData.name, productData.price, productData.desc, productData.img, item.quantity, item.observation, index); 
-} 
-
-function getProductBaseData(name) { 
-    const database = { 
-        'Açaí na Garrafa 300ml': { name: 'Açaí na Garrafa 300ml', price: 15.00, desc: 'Açaí, leite condensado, leite em pó, banana, paçoca', img: 'https://lh3.googleusercontent.com/d/1YPOIvfdImifipeNB4OKnIUSTQ0S_Bkol=s1000' }, 
-        'Açaí na Garrafa 500ml': { name: 'Açaí na Garrafa 500ml', price: 20.00, desc: 'Açaí, leite condensado, leite em pó, banana, paçoca', img: 'https://lh3.googleusercontent.com/d/1YPOIvfdImifipeNB4OKnIUSTQ0S_Bkol=s1000' } 
-    }; 
-    return database[name] || { name: name, price: 15.00, desc: 'Açaí, leite condensado, leite em pó, banana, paçoca', img: 'https://lh3.googleusercontent.com/d/1YPOIvfdImifipeNB4OKnIUSTQ0S_Bkol=s1000' }; 
-} 
-
-function increaseCartQty(index) { 
-    cart[index].quantity += 1; 
-    updateCartUI(); 
-} 
-
-function decreaseCartQty(index) { 
-    if (cart[index].quantity > 1) { 
-        cart[index].quantity -= 1; 
-    } else { 
-        cart.splice(index, 1); 
-    } 
-    updateCartUI(); 
-} 
-
-function removeItem(index) { 
-    let removedName = cart[index].name; 
-    cart.splice(index, 1); 
-    updateCartUI(); 
-    showToast(removedName + " removido do carrinho"); 
-} 
-
-function openPaymentDialog() { 
-    if (cart.length === 0) { 
-        showToast('Seu carrinho está vazio!'); 
-        return; 
-    } 
-    document.getElementById('payment-dialog-overlay').style.display = 'flex'; 
-} 
-
-function closePaymentDialog() { 
-    document.getElementById('payment-dialog-overlay').style.display = 'none'; 
-} 
-
-function selectPaymentOption(method, cardElement) { 
-    selectedPayment = method; 
-    document.querySelectorAll('.payment-option-card').forEach(card => { 
-        card.classList.remove('selected'); 
-    }); 
-    cardElement.classList.add('selected'); 
-    let changeContainer = document.getElementById('change-container'); 
-    if (method === 'Dinheiro') { 
-        changeContainer.style.display = 'block'; 
-    } else { 
-        changeContainer.style.display = 'none'; 
-        document.getElementById('change-input').value = ''; 
-    } 
-} 
-
-function confirmCheckout() { 
-    closePaymentDialog(); 
-    if (selectedPayment === 'Pix') {
-        openPixPaymentScreen();
-    } else {
-        saveAndFinalizeOrder();
-        checkoutWhatsApp();
-    }
-} 
-
-function saveAndFinalizeOrder() {
-    if (cart.length === 0) return;
-    localStorage.setItem('last_acai_order', JSON.stringify(cart));
-}
-
-function openPixPaymentScreen() {
-    openScreenWithHistory('order-status-screen');
-
-    let subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    let discountVal = 0;
-    if (activeCoupon) {
-        if (activeCoupon.type === 'fixed') discountVal = activeCoupon.value;
-        else if (activeCoupon.type === 'percent') discountVal = (subtotal * activeCoupon.value) / 100;
-    }
-    let total = Math.max(0, subtotal - discountVal);
-
-    let resumoHtml = '';
-    cart.forEach(item => {
-        resumoHtml += `<div>• ${item.quantity}x ${item.name} (${formatPrice(item.price * item.quantity)})</div>`;
-    });
-    document.getElementById('pix-resumo-itens').innerHTML = resumoHtml;
-    document.getElementById('pix-resumo-total').innerText = formatPrice(total);
-
-    const pixCopiaEColaReal = "00020126330014BR.GOV.BCB.PIX0111523122268205204000053039865802BR5922RIKELVE ALVES DE BRITO6009SAO PAULO622605224bBwJHXgZETnN6XDcaoso063046BD8";
-    document.getElementById('pix-copia-cola').value = pixCopiaEColaReal;
-}
-
-function copyPixCode() {
-    let copyText = document.getElementById('pix-copia-cola');
-    copyText.select();
-    copyText.setSelectionRange(0, 99999);
-    navigator.clipboard.writeText(copyText.value);
-    showToast('Chave Pix copiada com sucesso!');
-}
-
-function checkoutWhatsAppWithPixReceipt() {
-    saveAndFinalizeOrder();
-
-    let message = "📦 *NOVO PEDIDO - AÇAÍ DA 24 FB* 📦%0A%0A"; 
-    message += "📃 *ITENS DO PEDIDO:*%0A"; 
-    let subtotal = 0; 
-    cart.forEach(item => { 
-        let sub = item.price * item.quantity; 
-        subtotal += sub; 
-        let obsText = item.observation ? `_%0A ↳ 📝 Obs: ${item.observation}_` : ''; 
-        message += `• *${item.quantity}x* ${item.name} — *${formatPrice(sub)}*${obsText}%0A`; 
-    }); 
-    let discountVal = 0; 
-    if (activeCoupon) { 
-        if (activeCoupon.type === 'fixed') { 
-            discountVal = activeCoupon.value; 
-            if (discountVal > subtotal) discountVal = subtotal; 
-        } else if (activeCoupon.type === 'percent') { 
-            discountVal = (subtotal * activeCoupon.value) / 100; 
-        } 
-        message += `%0A🏷️ *Cupom Aplicado:* ${activeCoupon.code} (-${formatPrice(discountVal)})`; 
-        localStorage.setItem('used_coupon_' + activeCoupon.code, 'true'); 
-    } 
-    let total = subtotal - discountVal; 
-    if (total < 0) total = 0; 
-    message += `%0A%0A💳 *FORMA DE PAGAMENTO:* Pix`; 
-    message += `%0A💰 *TOTAL PAGO:* ${formatPrice(total)}`; 
-    message += `%0A%0A📎 *[ Segue o comprovante do Pix em anexo ]*`; 
-    
-    let phone = "5511954962246"; 
-    let url = `https://wa.me/${phone}?text=${message}`; 
-    window.open(url, '_blank'); 
-}
-
-function checkoutWhatsApp() { 
-    let message = "📦 *NOVO PEDIDO - AÇAÍ DA 24 FB* 📦%0A%0A"; 
-    message += "📃 *ITENS DO PEDIDO:*%0A"; 
-    let subtotal = 0; 
-    cart.forEach(item => { 
-        let sub = item.price * item.quantity; 
-        subtotal += sub; 
-        let obsText = item.observation ? `_%0A ↳ 📝 Obs: ${item.observation}_` : ''; 
-        message += `• *${item.quantity}x* ${item.name} — *${formatPrice(sub)}*${obsText}%0A`; 
-    }); 
-    let discountVal = 0; 
-    if (activeCoupon) { 
-        if (activeCoupon.type === 'fixed') { 
-            discountVal = activeCoupon.value; 
-            if (discountVal > subtotal) discountVal = subtotal; 
-        } else if (activeCoupon.type === 'percent') { 
-            discountVal = (subtotal * activeCoupon.value) / 100; 
-        } 
-        message += `%0A🏷️ *Cupom Aplicado:* ${activeCoupon.code} (-${formatPrice(discountVal)})`; 
-        localStorage.setItem('used_coupon_' + activeCoupon.code, 'true'); 
-    } 
-    let total = subtotal - discountVal; 
-    if (total < 0) total = 0; 
-    message += `%0A%0A💳 *FORMA DE PAGAMENTO:* ${selectedPayment}`; 
-    if (selectedPayment === 'Dinheiro') { 
-        let changeVal = parseFloat(document.getElementById('change-input').value); 
-        if (!isNaN(changeVal) && changeVal > 0) { 
-            let changeNeeded = changeVal - total; 
-            if (changeNeeded >= 0) { 
-                message += `%0A💵 *Troco para:* ${formatPrice(changeVal)} (Troco a devolver: *${formatPrice(changeNeeded)}*)`; 
-            } else { 
-                message += `%0A💵 *Troco para:* ${formatPrice(changeVal)} *(Valor menor que o total!)*`; 
-            } 
-        } else { 
-            message += `%0A💵 *Troco:* Não informado / Sem troco`; 
-        } 
-    } 
-    message += `%0A%0A💰 *TOTAL A PAGAR: ${formatPrice(total)}*`; 
-    message += `%0A%0A_Aguardando confirmação do estabelecimento!_ ✨`; 
-    let phone = "5511954962246"; 
-    let url = `https://wa.me/${phone}?text=${message}`; 
-    window.open(url, '_blank'); 
-} 
-
-function loadRecentOrderUI() {
-    let container = document.getElementById('recent-order-content');
-    let savedOrderJson = localStorage.getItem('last_acai_order');
-    
-    if (!savedOrderJson) {
-        container.innerHTML = `
-            <div style="text-align:center; padding: 40px 20px; color:#64748b;">
-                <p style="font-size: 1.1rem; font-weight: bold; margin-bottom: 8px;">Nenhum pedido recente encontrado.</p>
-                <p style="font-size: 0.85rem;">Assim que você finalizar seu primeiro pedido, ele aparecerá aqui para facilitar a recompra!</p>
-            </div>
-        `;
-        return;
-    }
-
-    let savedItems = JSON.parse(savedOrderJson);
-    let html = '<p style="font-size: 0.9rem; color: #64748b; margin-bottom: 15px;">Estes foram os itens do seu último pedido. Deseja pedir novamente?</p>';
-    let totalSub = 0;
-
-    savedItems.forEach(item => {
-        let itemTotal = item.price * item.quantity;
-        totalSub += itemTotal;
-        let obsText = item.observation ? `<div style="color: #475569; font-size: 0.8rem; margin-top: 4px; background: #f8fafc; padding: 6px; border-radius: 6px;">Obs: ${item.observation}</div>` : '';
-        html += `
-            <div style="background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <strong>${item.quantity}x ${item.name}</strong>
-                        ${obsText}
-                    </div>
-                    <span style="font-weight: bold; color: #6b21a8; font-size: 0.9rem;">${formatPrice(itemTotal)}</span>
-                </div>
-            </div>
-        `;
-    });
-
-    html += `
-        <div style="background: white; padding: 15px; border-radius: 10px; margin-top: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05rem; margin-bottom: 15px;">
-                <span>Total do Pedido:</span>
-                <span style="color: #6b21a8;">${formatPrice(totalSub)}</span>
-            </div>
-            <button class="checkout-btn" onclick="reorderLastOrder()">Adicionar Tudo ao Carrinho & Comprar</button>
-        </div>
-    `;
-
-    container.innerHTML = html;
-}
-
-function reorderLastOrder() {
-    let savedOrderJson = localStorage.getItem('last_acai_order');
-    if (!savedOrderJson) return;
-
-    let savedItems = JSON.parse(savedOrderJson);
-    savedItems.forEach(item => {
-        addToCart(item.name, item.price, item.quantity, item.observation || '');
-    });
-
-    showToast('Itens adicionados ao carrinho!');
-    openScreenWithHistory('cart-screen');
-}
-
-function searchProducts() { 
-    let query = document.getElementById('search-input').value.toLowerCase(); 
-    let items = document.querySelectorAll('.menu-item'); 
-    items.forEach(item => { 
-        let name = item.getAttribute('data-name'); 
-        if (name.includes(query)) { 
-            item.style.display = 'flex'; 
-        } else { 
-            item.style.display = 'none'; 
-        } 
-    }); 
-} 
-</script> 
-</body> 
+        // Carrega o primeiro capítulo automaticamente ao publicar online
+        window.onload = () => {
+            buscarTextoBiblico();
+        };
+    </script>
+</body>
 </html>

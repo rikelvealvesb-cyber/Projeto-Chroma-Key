@@ -2,352 +2,890 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Avançado de Conexão Remota</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vero Chat Pro</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#6366f1', secondary: '#a855f7' }
+                }
+            }
+        }
+    </script>
+    <!-- Animate.css e FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: Arial, sans-serif; background: #121212; color: #fff; padding: 15px; margin: 0; }
-        .card { background: #1e1e1e; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; }
-        button { background: #4CAF50; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; margin: 5px 0; }
-        button:hover { background: #45a049; }
-        .btn-danger { background: #f44336; }
-        .btn-danger:hover { background: #d32f2f; }
-        select, input { padding: 8px; margin-right: 10px; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 4px; }
-        .log { background: #000; padding: 10px; font-family: monospace; height: 100px; overflow-y: scroll; border-radius: 4px; font-size: 12px; }
-        video { width: 100%; max-height: 250px; background: #000; border-radius: 4px; margin-top: 10px; }
-        .chat-box { height: 120px; overflow-y: scroll; background: #111; padding: 8px; border-radius: 4px; margin-bottom: 8px; font-size: 13px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        @media(max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+        html, body { height: 100%; margin: 0; overflow: hidden; background-color: #f8fafc; }
+        .screen { display: none; height: 100vh; width: 100vw; flex-direction: column; }
+        .active { display: flex; }
+        .glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 10px; }
     </style>
 </head>
-<body>
+<body class="text-slate-800 font-sans select-none">
 
-    <h2>Central de Controle Remoto (Firebase)</h2>
-
-    <!-- Configuração Inicial -->
-    <div class="card" id="cardConfig">
-        <h3>1. Autenticação na Rede</h3>
-        <input type="text" id="deviceName" placeholder="Nome do Aparelho" value="Dispositivo_Teste">
-        <select id="deviceType">
-            <option value="conector">Conector (Compartilha Acesso)</option>
-            <option value="recebedor">Recebedor (Controla/Acessa)</option>
-        </select>
-        <button onclick="registrarDispositivo()">Entrar na Rede</button>
+    <!-- 1. SPLASH SCREEN -->
+    <div id="splash" class="screen active items-center justify-center animate__animated animate__fadeIn bg-white">
+        <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-3xl text-white shadow-xl animate__animated animate__bounceIn">
+            <i class="fa-solid fa-comments"></i>
+        </div>
+        <h1 class="text-2xl font-bold tracking-widest mt-4 text-slate-800">VERO CHAT</h1>
+        <p class="text-xs text-slate-400 mt-1">Carregando sistema...</p>
     </div>
 
-    <!-- Painel do Conector -->
-    <div class="card" id="interfaceConector" style="display:none;">
-        <h3>Painel do Conector</h3>
-        <p>Status: <span id="statusConector" style="color: yellow;">Aguardando conexões...</span></p>
-        <div id="divSolicitacao" style="display:none;">
-            <p>Solicitação de: <b id="solicitanteNome"></b></p>
-            <button onclick="aceitarConexao()">Aceitar Acesso</button>
-        </div>
-        <div id="painelConectorAtivo" style="display:none;">
-            <p style="color: lightgreen;"><b>Sessão Ativa com o Recebedor!</b></p>
-            <button onclick="iniciarCompartilhamentoTela()">Compartilhar Tela (WebRTC)</button>
-            <video id="localVideo" autoplay playsinline muted></video>
+    <!-- 2. AUTH SCREEN -->
+    <div id="auth" class="screen items-center justify-center p-4 animate__animated animate__zoomIn overflow-y-auto">
+        <div class="glass w-full max-w-sm p-6 sm:p-8 rounded-3xl shadow-2xl my-auto">
+            <div class="text-center mb-6">
+                <h2 id="auth-title" class="text-2xl font-bold text-slate-900">Entrar</h2>
+                <p id="auth-subtitle" class="text-xs text-slate-500 mt-1">Acesse sua conta</p>
+            </div>
+            <div class="space-y-4">
+                <!-- Foto de Perfil (Apenas no Cadastro) -->
+                <div id="register-photo-container" class="hidden flex flex-col items-center justify-center mb-2">
+                    <label class="cursor-pointer relative group">
+                        <div id="photo-preview" class="w-20 h-20 min-w-[80px] min-h-[80px] rounded-full bg-slate-200 border-2 border-dashed border-primary flex items-center justify-center overflow-hidden shadow-inner">
+                            <i class="fa-solid fa-camera text-slate-400 text-xl"></i>
+                        </div>
+                        <input type="file" id="profile-pic-input" accept="image/*" class="hidden" onchange="previewProfileImage(event, 'photo-preview')">
+                    </label>
+                    <span class="text-[11px] text-slate-500 mt-1 font-medium">Toque para adicionar foto</span>
+                </div>
+
+                <input type="text" id="username-input" placeholder="Nome de usuário" autocomplete="off"
+                    class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition">
+                
+                <!-- Senha com Olhinho -->
+                <div class="relative">
+                    <input type="password" id="password-input" placeholder="Senha"
+                        class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 pr-10 text-sm focus:outline-none focus:border-primary transition">
+                    <button type="button" onclick="togglePasswordVisibility('password-input', 'eye-icon-1')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none">
+                        <i id="eye-icon-1" class="fa-solid fa-eye-slash text-sm"></i>
+                    </button>
+                </div>
+
+                <!-- Confirmar Senha (Apenas no Cadastro) -->
+                <div id="confirm-password-container" class="hidden relative">
+                    <input type="password" id="confirm-password-input" placeholder="Confirmar senha"
+                        class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 pr-10 text-sm focus:outline-none focus:border-primary transition">
+                    <button type="button" onclick="togglePasswordVisibility('confirm-password-input', 'eye-icon-2')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none">
+                        <i id="eye-icon-2" class="fa-solid fa-eye-slash text-sm"></i>
+                    </button>
+                </div>
+                
+                <button onclick="submitAuth()" id="auth-btn-action" class="w-full bg-gradient-to-r from-primary to-secondary text-white py-3 rounded-xl font-bold text-sm shadow-lg hover:opacity-95 active:scale-95 transition">
+                    Entrar na Conta
+                </button>
+            </div>
+            <div class="text-center mt-5">
+                <button onclick="toggleAuthMode()" id="toggle-auth-text" class="text-xs text-indigo-600 hover:underline font-semibold">
+                    Não tem uma conta? Cadastre-se
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Painel do Recebedor -->
-    <div class="card" id="interfaceRecebedor" style="display:none;">
-        <h3>Painel do Recebedor</h3>
-        <p>Conectores Disponíveis:</p>
-        <select id="listaConectores"></select>
-        <button onclick="solicitarConexao()">Solicitar Conexão</button>
-        <p>Status: <span id="statusRecebedor" style="color: yellow;">Desconectado</span></p>
+    <!-- 3. HOME SCREEN -->
+    <div id="home" class="screen p-4 sm:p-6 justify-between animate__animated animate__fadeIn bg-slate-50">
+        <!-- Header -->
+        <header class="flex justify-between items-center glass p-3 rounded-2xl shadow-sm">
+            <div class="flex items-center gap-3">
+                <div onclick="openEditProfileModal()" id="header-avatar" class="w-12 h-12 min-w-[48px] min-h-[48px] rounded-full bg-slate-200 overflow-hidden flex items-center justify-center border-2 border-primary shadow-inner cursor-pointer hover:opacity-85 transition shrink-0" title="Editar Perfil">
+                    <i class="fa-solid fa-user text-slate-400 text-sm"></i>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div>
+                        <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Usuário</span>
+                        <h2 id="logged-user-display" class="font-bold text-sm text-primary">--</h2>
+                    </div>
+                    <button onclick="openEditProfileModal()" class="w-7 h-7 bg-indigo-50 hover:bg-indigo-100 text-primary rounded-lg flex items-center justify-center transition border border-indigo-100 shadow-sm" title="Editar Perfil">
+                        <i class="fa-solid fa-pencil text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openTab('friends')" class="bg-white hover:bg-slate-100 px-3 py-2 rounded-xl text-xs font-semibold transition border border-slate-200 text-slate-700 shadow-sm">
+                    <i class="fa-solid fa-users text-primary"></i> Amigos
+                </button>
+                <button onclick="confirmLogout()" class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-xl text-xs font-semibold transition border border-red-200">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sair
+                </button>
+            </div>
+        </header>
 
-        <div id="painelRecebedorAtivo" style="display:none; margin-top: 15px;">
-            <hr>
-            <h4>Controle e Monitoramento Remoto</h4>
+        <!-- Main Content Area -->
+        <div class="flex-1 my-4 overflow-y-auto space-y-4 pr-1">
+            <!-- Abas (Salas / Amigos) -->
+            <div id="tab-rooms" class="space-y-3">
+                <div class="flex gap-2">
+                    <input type="text" id="search-room" placeholder="Pesquisar salas..." oninput="filterRooms()"
+                        class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary shadow-sm">
+                    <button onclick="openCreateRoomModal()" class="bg-primary hover:bg-indigo-600 px-4 rounded-xl text-white text-sm shadow transition flex items-center justify-center">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <div id="rooms-list" class="space-y-2.5">
+                    <!-- Salas injetadas dinamicamente via Firebase -->
+                </div>
+            </div>
+
+            <!-- Seção de Amigos -->
+            <div id="tab-friends" class="hidden space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-slate-800">Gerenciar Amigos</h3>
+                    <button onclick="openTab('rooms')" class="text-xs text-indigo-600 font-semibold hover:underline">Voltar às Salas</button>
+                </div>
+                
+                <div class="relative">
+                    <div class="flex gap-2">
+                        <input type="text" id="search-friend-input" placeholder="Pesquisar usuário..." oninput="searchUsersAutocomplete()" autocomplete="off"
+                            class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary shadow-sm">
+                    </div>
+                    <!-- Lista de Autocomplete em Tempo Real com Foto -->
+                    <div id="autocomplete-results" class="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto z-30 hidden">
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Pedidos Pendentes Recebidos</h4>
+                    <div id="friend-requests-list" class="space-y-2">
+                        <p class="text-xs text-slate-400 italic">Nenhum pedido pendente.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Meus Amigos</h4>
+                    <div id="friends-list" class="space-y-2">
+                        <p class="text-xs text-slate-400 italic">Nenhum amigo adicionado.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: DETALHES DO USUÁRIO (USER DETAILS) -->
+    <div id="modal-user-details" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4 z-50 animate__animated animate__fadeIn animate__faster">
+        <div class="glass w-full max-w-sm p-6 rounded-3xl space-y-4 border border-slate-200 shadow-2xl bg-white text-center">
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-bold text-slate-900">Detalhes do Usuário</h3>
+                <button onclick="closeModal('modal-user-details')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div id="detail-avatar-container" class="w-24 h-24 min-w-[96px] min-h-[96px] rounded-full bg-slate-200 mx-auto overflow-hidden border-2 border-primary shadow-md flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-user text-slate-400 text-3xl"></i>
+            </div>
+            <div>
+                <h4 id="detail-username" class="text-lg font-bold text-slate-800">--</h4>
+                <p id="detail-bio" class="text-xs text-slate-500 mt-1 italic">Sem biografia informada.</p>
+            </div>
+            <div id="detail-action-container" class="pt-2">
+                <!-- Botão dinâmico injetado via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EDITAR PERFIL -->
+    <div id="modal-edit-profile" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4 z-50 animate__animated animate__fadeIn animate__faster">
+        <div class="glass w-full max-w-sm p-6 rounded-3xl space-y-4 border border-slate-200 shadow-2xl bg-white max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-900">Editar Perfil</h3>
+                <button onclick="closeModal('modal-edit-profile')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="flex flex-col items-center justify-center">
+                <label class="cursor-pointer relative group">
+                    <div id="edit-photo-preview" class="w-20 h-20 min-w-[80px] min-h-[80px] rounded-full bg-slate-200 border-2 border-dashed border-primary flex items-center justify-center overflow-hidden shadow-inner">
+                        <i class="fa-solid fa-camera text-slate-400 text-xl"></i>
+                    </div>
+                    <input type="file" id="edit-profile-pic-input" accept="image/*" class="hidden" onchange="previewProfileImage(event, 'edit-photo-preview')">
+                </label>
+                <span class="text-[11px] text-slate-500 mt-1 font-medium">Alterar foto</span>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Nome de Usuário</label>
+                    <input type="text" id="edit-username" placeholder="Novo nome" class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary mt-1">
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Biografia (Bio)</label>
+                    <textarea id="edit-bio" placeholder="Fale um pouco sobre você..." class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary mt-1 resize-none h-20"></textarea>
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Nova Senha (opcional)</label>
+                    <input type="password" id="edit-password" placeholder="Deixe em branco para manter" class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary mt-1">
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeModal('modal-edit-profile')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl text-xs font-bold transition">Cancelar</button>
+                <button onclick="saveProfileChanges()" class="flex-1 bg-primary hover:bg-indigo-600 text-white py-3 rounded-xl text-xs font-bold transition shadow">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CRIAR SALA -->
+    <div id="modal-create-room" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4 z-50 animate__animated animate__fadeIn animate__faster">
+        <div class="glass w-full max-w-sm p-6 rounded-3xl space-y-4 border border-slate-200 shadow-2xl bg-white">
+            <h3 class="text-lg font-bold text-slate-900">Criar Nova Sala</h3>
+            <input type="text" id="new-room-name" placeholder="Nome da Sala" class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary">
             
-            <!-- IoT / Comandos -->
-            <div class="card">
-                <h5>Automação IoT (Relé / Luzes)</h5>
-                <button onclick="enviarComandoIoT('ligar')">Ligar Dispositivo</button>
-                <button class="btn-danger" onclick="enviarComandoIoT('desligar')">Desligar Dispositivo</button>
-                <p>Estado do IoT: <b id="iotStatus">Desconhecido</b></p>
+            <div class="flex gap-3">
+                <label class="flex-1 bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center gap-2 cursor-pointer text-xs font-medium">
+                    <input type="radio" name="room-type" value="public" checked onchange="togglePasswordInput(false)"> Pública
+                </label>
+                <label class="flex-1 bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center gap-2 cursor-pointer text-xs font-medium">
+                    <input type="radio" name="room-type" value="private" onchange="togglePasswordInput(true)"> Privada
+                </label>
             </div>
 
-            <!-- Suporte Técnico / Status -->
-            <div class="card">
-                <h5>Suporte Técnico & Informações</h5>
-                <p>Nível de Bateria: <b id="infoBateria">-</b></p>
-                <p>Comando IoT Recebido pelo Conector: <b id="comandoAtualRecebido">Nenhum</b></p>
+            <div id="room-password-container" class="hidden">
+                <input type="password" id="new-room-password" placeholder="Senha da Sala" class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary">
             </div>
 
-            <!-- Espelhamento -->
-            <div class="card">
-                <h5>Tela Remota do Conector</h5>
-                <video id="remoteVideo" autoplay playsinline></video>
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeModal('modal-create-room')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl text-xs font-bold transition">Cancelar</button>
+                <button onclick="confirmCreateRoom()" class="flex-1 bg-primary hover:bg-indigo-600 text-white py-3 rounded-xl text-xs font-bold transition shadow">Criar Sala</button>
             </div>
         </div>
     </div>
 
-    <!-- Sistema de Chat Integrado -->
-    <div class="card" id="cardChat" style="display:none;">
-        <h3>Chat Privado da Sessão</h3>
-        <div id="chatMessages" class="chat-box"></div>
-        <input type="text" id="chatInput" placeholder="Digite sua mensagem..." style="width: 70%;">
-        <button onclick="enviarMensagemChat()">Enviar</button>
+    <!-- MODAL: SENHA DA SALA PRIVADA -->
+    <div id="modal-room-password" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4 z-50 animate__animated animate__fadeIn animate__faster">
+        <div class="glass w-full max-w-sm p-6 rounded-3xl space-y-4 border border-slate-200 shadow-2xl bg-white">
+            <h3 class="text-lg font-bold text-slate-900">Sala Privada</h3>
+            <p class="text-xs text-slate-500">Esta sala é protegida por senha. Digite abaixo para entrar:</p>
+            <input type="password" id="enter-room-password" placeholder="Senha da sala" class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary">
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeModal('modal-room-password')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl text-xs font-bold transition">Cancelar</button>
+                <button onclick="verifyRoomPassword()" class="flex-1 bg-primary hover:bg-indigo-600 text-white py-3 rounded-xl text-xs font-bold transition shadow">Entrar</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Log de Atividades -->
-    <div class="card">
-        <h3>Log do Sistema</h3>
-        <div id="logBox" class="log"></div>
+    <!-- MODAL: CONFIRMAÇÃO DE LOGOUT -->
+    <div id="modal-logout" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center p-4 z-50 animate__animated animate__fadeIn animate__faster">
+        <div class="glass w-full max-w-xs p-6 rounded-3xl text-center space-y-4 border border-slate-200 shadow-2xl bg-white">
+            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900">Deseja sair da conta?</h3>
+            <p class="text-xs text-slate-500">Você precisará digitar sua senha novamente para acessar o sistema.</p>
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeModal('modal-logout')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 rounded-xl text-xs font-bold transition">Cancelar</button>
+                <button onclick="executeLogout()" class="flex-1 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl text-xs font-bold transition shadow">Sim, Sair</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Firebase SDK & WebRTC Script -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
+    <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCTkq0uXy5kHg9N8rj9--Dooh8cuguYxPE",
             authDomain: "subjectrobot-49600.firebaseapp.com",
             databaseURL: "https://subjectrobot-49600-default-rtdb.firebaseio.com",
             projectId: "subjectrobot-49600",
             storageBucket: "subjectrobot-49600.appspot.com",
+            messagingSenderId: "731604558049",
             appId: "1:731604558049:android:7f47b30b289445814017a0"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        let meuId = 'user_' + Math.floor(Math.random() * 100000);
-        let meuTipo = '';
-        let meuName = '';
-        let conexaoAtivaId = null;
-        let peerConnection;
-        let localStream;
+        let isRegisterMode = false;
+        let currentUser = null;
+        let selectedRoomToJoin = null;
+        let allRoomsCache = [];
+        let base64Image = '';
+        let myFriendsList = {};
+        let mySentRequests = {};
 
-        const servers = {
-            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-        };
-
-        window.logar = function(msg) {
-            const box = document.getElementById('logBox');
-            box.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}<br>`;
-            box.scrollTop = box.scrollHeight;
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
         }
 
-        window.registrarDispositivo = function() {
-            meuName = document.getElementById('deviceName').value || meuId;
-            meuTipo = document.getElementById('deviceType').value;
-            const refDev = ref(db, 'devices/' + meuId);
-
-            set(refDev, {
-                id: meuId,
-                nome: meuName,
-                tipo: meuTipo,
-                status: 'disponivel',
-                bateria: '85% (Simulada)',
-                iot: 'desligado'
-            }).then(() => {
-                logar(`Registrado como ${meuTipo.toUpperCase()} (${meuName})`);
-                document.getElementById('cardConfig').style.display = 'none';
-                document.getElementById('cardChat').style.display = 'block';
-
-                if(meuTipo === 'conector') {
-                    document.getElementById('interfaceConector').style.display = 'block';
-                    escutarConector();
-                } else {
-                    document.getElementById('interfaceRecebedor').style.display = 'block';
-                    listarConectores();
-                }
-            });
-
-            window.addEventListener('beforeunload', () => remove(refDev));
-        }
-
-        // --- CONECTOR LOGIC ---
-        function escutarConector() {
-            const refMe = ref(db, 'devices/' + meuId);
-            onValue(refMe, (snapshot) => {
-                const data = snapshot.val();
-                if(!data) return;
-
-                if(data.status === 'solicitando') {
-                    conexaoAtivaId = data.recebedorId;
-                    document.getElementById('solicitanteNome').innerText = data.recebedorNome;
-                    document.getElementById('divSolicitacao').style.display = 'block';
-                    logar(`Solicitação recebida de ${data.recebedorNome}`);
-                }
-
-                // Tratar WebRTC Signaling via Firebase
-                if(data.offer && !peerConnection) {
-                    tratarOfferWebRTC(data.offer);
-                }
-                if(data.candidate && peerConnection) {
-                    peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-                }
-            });
-        }
-
-        window.aceitarConexao = function() {
-            update(ref(db, 'devices/' + meuId), { status: 'conectado' });
-            if(conexaoAtivaId) {
-                update(ref(db, 'devices/' + conexaoAtivaId), { status: 'conectado' });
+        setTimeout(() => {
+            const savedUserId = localStorage.getItem('chat_current_user_id');
+            if (savedUserId) {
+                db.ref(`users/${savedUserId}`).once('value').then(snapshot => {
+                    if (snapshot.exists()) {
+                        currentUser = snapshot.val();
+                        updateHeaderUI();
+                        showScreen('home');
+                        initAppListeners();
+                    } else {
+                        localStorage.removeItem('chat_current_user_id');
+                        showScreen('auth');
+                    }
+                }).catch(() => {
+                    showScreen('auth');
+                });
+            } else {
+                showScreen('auth');
             }
-            document.getElementById('divSolicitacao').style.display = 'none';
-            document.getElementById('statusConector').innerText = 'CONECTADO COM SUCESSO';
-            document.getElementById('statusConector').style.color = 'lightgreen';
-            document.getElementById('painelConectorAtivo').style.display = 'block';
-            logar('Conexão aceita.');
+        }, 1500);
+
+        function updateHeaderUI() {
+            document.getElementById('logged-user-display').innerText = currentUser.username;
+            if (currentUser.profilePic) {
+                document.getElementById('header-avatar').innerHTML = `<img src="${currentUser.profilePic}" class="w-full h-full object-cover">`;
+            } else {
+                document.getElementById('header-avatar').innerHTML = `<i class="fa-solid fa-user text-slate-400 text-sm"></i>`;
+            }
         }
 
-        // --- RECEBEDOR LOGIC ---
-        function listarConectores() {
-            onValue(ref(db, 'devices'), (snapshot) => {
-                const data = snapshot.val();
-                const select = document.getElementById('listaConectores');
-                select.innerHTML = '';
-                if(!data) return;
+        function toggleAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            const photoContainer = document.getElementById('register-photo-container');
+            const confirmContainer = document.getElementById('confirm-password-container');
 
-                Object.keys(data).forEach(id => {
-                    let dev = data[id];
-                    if(dev.tipo === 'conector' && dev.status === 'disponivel') {
-                        let opt = document.createElement('option');
-                        opt.value = dev.id;
-                        opt.text = `${dev.nome} (${dev.id})`;
-                        select.appendChild(opt);
-                    }
-                });
-            });
+            if (isRegisterMode) {
+                photoContainer.classList.remove('hidden');
+                confirmContainer.classList.remove('hidden');
+                document.getElementById('auth-title').innerText = 'Criar Conta';
+                document.getElementById('auth-subtitle').innerText = 'Cadastre-se com foto, usuário e senha';
+                document.getElementById('auth-btn-action').innerText = 'Cadastrar';
+                document.getElementById('toggle-auth-text').innerText = 'Já tem uma conta? Faça login';
+            } else {
+                photoContainer.classList.add('hidden');
+                confirmContainer.classList.add('hidden');
+                document.getElementById('auth-title').innerText = 'Entrar';
+                document.getElementById('auth-subtitle').innerText = 'Acesse sua conta';
+                document.getElementById('auth-btn-action').innerText = 'Entrar na Conta';
+                document.getElementById('toggle-auth-text').innerText = 'Não tem uma conta? Cadastre-se';
+            }
         }
 
-        window.solicitarConexao = function() {
-            const conectorId = document.getElementById('listaConectores').value;
-            if(!conectorId) return alert('Selecione um conector');
-            conexaoAtivaId = conectorId;
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        }
 
-            update(ref(db, 'devices/' + conectorId), {
-                status: 'solicitando',
-                recebedorId: meuId,
-                recebedorNome: meuName
-            }).then(() => {
-                document.getElementById('statusRecebedor').innerText = 'Aguardando aprovação...';
-                logar('Solicitação enviada ao conector.');
+        function previewProfileImage(event, targetPreviewId) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 150;
+                        const MAX_HEIGHT = 150;
+                        let width = img.width;
+                        let height = img.height;
 
-                onValue(ref(db, 'devices/' + conectorId), (snapshot) => {
-                    const data = snapshot.val();
-                    if(data && data.status === 'conectado') {
-                        document.getElementById('statusRecebedor').innerText = 'CONECTADO!';
-                        document.getElementById('statusRecebedor').style.color = 'lightgreen';
-                        document.getElementById('painelRecebedorAtivo').style.display = 'block';
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
                         
-                        // Sincronizar dados de suporte técnico
-                        document.getElementById('infoBateria').innerText = data.bateria || 'N/A';
-                        document.getElementById('iotStatus').innerText = data.iot || 'desligado';
-
-                        // Iniciar WebRTC como Recebedor
-                        iniciarConexaoWebRTCRecebedor(conectorId);
+                        base64Image = canvas.toDataURL('image/jpeg', 0.6);
+                        document.getElementById(targetPreviewId).innerHTML = `<img src="${base64Image}" class="w-full h-full object-cover">`;
                     }
-                });
-            });
+                    img.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
         }
 
-        // --- IoT & SUPORTE ---
-        window.enviarComandoIoT = function(acao) {
-            if(!conexaoAtivaId) return;
-            update(ref(db, 'devices/' + conexaoAtivaId), { iot: acao });
-            logar(`Comando IoT enviado: ${acao}`);
-        }
+        function submitAuth() {
+            const usernameInput = document.getElementById('username-input').value.trim();
+            const passwordInput = document.getElementById('password-input').value.trim();
+            const confirmPasswordInput = document.getElementById('confirm-password-input').value.trim();
+            const btnAction = document.getElementById('auth-btn-action');
 
-        // --- WEBRTC (Espelhamento de Tela) ---
-        window.iniciarCompartilhamentoTela = async function() {
-            try {
-                localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-                document.getElementById('localVideo').srcObject = localStream;
+            if (!usernameInput || !passwordInput) {
+                alert("Por favor, preencha o usuário e a senha!");
+                return;
+            }
 
-                peerConnection = new RTCPeerConnection(servers);
-                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+            if (isRegisterMode && passwordInput !== confirmPasswordInput) {
+                alert("As senhas não coincidem!");
+                return;
+            }
 
-                peerConnection.onicecandidate = event => {
-                    if (event.candidate) {
-                        update(ref(db, 'devices/' + meuId), { candidate: event.candidate.toJSON() });
-                    }
+            const usersRef = db.ref('users');
+
+            if (isRegisterMode) {
+                btnAction.innerText = "Cadastrando...";
+                btnAction.disabled = true;
+
+                const newUserRef = usersRef.push();
+                const userId = newUserRef.key;
+                const userData = { 
+                    id: userId, 
+                    username: usernameInput, 
+                    password: passwordInput,
+                    profilePic: base64Image || '',
+                    bio: 'Olá! Estou usando o Vero Chat.'
                 };
 
-                const offer = await peerConnection.createOffer();
-                await peerConnection.setLocalDescription(offer);
+                newUserRef.set(userData)
+                    .then(() => {
+                        currentUser = userData;
+                        localStorage.setItem('chat_current_user_id', currentUser.id);
+                        updateHeaderUI();
+                        showScreen('home');
+                        initAppListeners();
+                    })
+                    .catch((error) => {
+                        alert("Erro ao cadastrar: " + error.message);
+                        btnAction.innerText = "Cadastrar";
+                        btnAction.disabled = false;
+                    });
+            } else {
+                btnAction.innerText = "Entrando...";
+                btnAction.disabled = true;
 
-                update(ref(db, 'devices/' + meuId), { offer: { type: offer.type, sdp: offer.sdp } });
-                logar('Transmissão de tela iniciada.');
-            } catch (err) {
-                alert('Erro ao capturar tela: ' + err.message);
+                usersRef.orderByChild('username').equalTo(usernameInput).once('value')
+                    .then((snapshot) => {
+                        btnAction.innerText = "Entrar na Conta";
+                        btnAction.disabled = false;
+
+                        if (!snapshot.exists()) {
+                            alert("Usuário não encontrado!");
+                            return;
+                        }
+                        let found = null;
+                        snapshot.forEach(child => {
+                            if (child.val().password === passwordInput) found = child.val();
+                        });
+                        if (found) {
+                            currentUser = found;
+                            localStorage.setItem('chat_current_user_id', currentUser.id);
+                            updateHeaderUI();
+                            showScreen('home');
+                            initAppListeners();
+                        } else {
+                            alert("Senha incorreta!");
+                        }
+                    })
+                    .catch((error) => {
+                        alert("Erro ao entrar: " + error.message);
+                        btnAction.innerText = "Entrar na Conta";
+                        btnAction.disabled = false;
+                    });
             }
         }
 
-        async function tratarOfferWebRTC(offer) {
-            peerConnection = new RTCPeerConnection(servers);
+        function openEditProfileModal() {
+            document.getElementById('edit-username').value = currentUser.username || '';
+            document.getElementById('edit-bio').value = currentUser.bio || '';
+            document.getElementById('edit-password').value = '';
+            base64Image = currentUser.profilePic || '';
             
-            peerConnection.ontrack = event => {
-                document.getElementById('remoteVideo').srcObject = event.streams[0];
-                logar('Recebendo fluxo de vídeo remoto.');
-            };
+            if (currentUser.profilePic) {
+                document.getElementById('edit-photo-preview').innerHTML = `<img src="${currentUser.profilePic}" class="w-full h-full object-cover">`;
+            } else {
+                document.getElementById('edit-photo-preview').innerHTML = `<i class="fa-solid fa-camera text-slate-400 text-xl"></i>`;
+            }
 
-            peerConnection.onicecandidate = event => {
-                if (event.candidate && conexaoAtivaId) {
-                    update(ref(db, 'devices/' + conexaoAtivaId), { candidate: event.candidate.toJSON() });
-                }
-            };
-
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
-
-            update(ref(db, 'devices/' + conexaoAtivaId), { answer: { type: answer.type, sdp: answer.sdp } });
+            document.getElementById('modal-edit-profile').classList.remove('hidden');
+            document.getElementById('modal-edit-profile').classList.add('flex');
         }
 
-        async function iniciarConexaoWebRTCRecebedor(conectorId) {
-            peerConnection = new RTCPeerConnection(servers);
+        function saveProfileChanges() {
+            const newUsername = document.getElementById('edit-username').value.trim();
+            const newBio = document.getElementById('edit-bio').value.trim();
+            const newPassword = document.getElementById('edit-password').value.trim();
 
-            peerConnection.ontrack = event => {
-                document.getElementById('remoteVideo').srcObject = event.streams[0];
-                logar('Tela remota conectada com sucesso!');
+            if (!newUsername) {
+                alert("O nome de usuário não pode ficar vazio!");
+                return;
+            }
+
+            const updatedData = {
+                username: newUsername,
+                bio: newBio,
+                profilePic: base64Image || currentUser.profilePic || ''
+            };
+            if (newPassword) {
+                updatedData.password = newPassword;
+            }
+
+            db.ref(`users/${currentUser.id}`).update(updatedData).then(() => {
+                currentUser = { ...currentUser, ...updatedData };
+                updateHeaderUI();
+                closeModal('modal-edit-profile');
+                alert("Perfil atualizado com sucesso!");
+            }).catch(err => {
+                alert("Erro ao atualizar perfil: " + err.message);
+            });
+        }
+
+        function confirmLogout() {
+            document.getElementById('modal-logout').classList.remove('hidden');
+            document.getElementById('modal-logout').classList.add('flex');
+        }
+
+        function executeLogout() {
+            localStorage.removeItem('chat_current_user_id');
+            currentUser = null;
+            closeModal('modal-logout');
+            showScreen('auth');
+        }
+
+        function openTab(tabName) {
+            if (tabName === 'rooms') {
+                document.getElementById('tab-rooms').classList.remove('hidden');
+                document.getElementById('tab-friends').classList.add('hidden');
+            } else {
+                document.getElementById('tab-rooms').classList.add('hidden');
+                document.getElementById('tab-friends').classList.remove('hidden');
+            }
+        }
+
+        function openCreateRoomModal() {
+            document.getElementById('new-room-name').value = '';
+            document.getElementById('new-room-password').value = '';
+            document.getElementById('modal-create-room').classList.remove('hidden');
+            document.getElementById('modal-create-room').classList.add('flex');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('flex');
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function togglePasswordInput(show) {
+            const container = document.getElementById('room-password-container');
+            if (show) container.classList.remove('hidden');
+            else container.classList.add('hidden');
+        }
+
+        function confirmCreateRoom() {
+            const name = document.getElementById('new-room-name').value.trim();
+            const type = document.querySelector('input[name="room-type"]:checked').value;
+            const password = document.getElementById('new-room-password').value.trim();
+
+            if (!name) {
+                alert("Dê um nome para a sala!");
+                return;
+            }
+            if (type === 'private' && !password) {
+                alert("Salas privadas exigem uma senha!");
+                return;
+            }
+
+            const roomData = {
+                name: name,
+                type: type,
+                password: type === 'private' ? password : '',
+                createdBy: currentUser.username,
+                createdAt: Date.now()
             };
 
-            peerConnection.onicecandidate = event => {
-                if (event.candidate) {
-                    update(ref(db, 'devices/' + conectorId), { candidate: event.candidate.toJSON() });
-                }
-            };
+            db.ref('rooms').push().set(roomData).then(() => {
+                closeModal('modal-create-room');
+            });
+        }
 
-            onValue(ref(db, 'devices/' + conectorId), async (snapshot) => {
-                const data = snapshot.val();
-                if(data && data.answer && !peerConnection.currentRemoteDescription) {
-                    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+        function initAppListeners() {
+            db.ref('rooms').on('value', (snapshot) => {
+                const list = document.getElementById('rooms-list');
+                list.innerHTML = '';
+                allRoomsCache = [];
+
+                if (!snapshot.exists()) {
+                    list.innerHTML = `<p class="text-xs text-slate-400 text-center py-6 italic">Nenhuma sala criada no momento.</p>`;
+                    return;
                 }
-                if(data && data.candidate) {
-                    try {
-                        await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-                    } catch(e){}
+
+                snapshot.forEach(child => {
+                    const room = child.val();
+                    room.id = child.key;
+                    allRoomsCache.push(room);
+                });
+
+                renderRooms(allRoomsCache);
+            });
+
+            // Monitorar meus amigos puxando os dados completos do usuário ou buscando foto/bio para a lista
+            db.ref(`friends/${currentUser.id}`).on('value', (snapshot) => {
+                myFriendsList = snapshot.val() || {};
+                const friendsListDiv = document.getElementById('friends-list');
+                friendsListDiv.innerHTML = '';
+
+                if (!snapshot.exists()) {
+                    friendsListDiv.innerHTML = `<p class="text-xs text-slate-400 italic">Nenhum amigo adicionado.</p>`;
+                    return;
+                }
+
+                snapshot.forEach(child => {
+                    const friendId = child.key;
+                    // Busca os detalhes mais recentes do amigo no nó 'users' para garantir foto e bio atualizadas
+                    db.ref(`users/${friendId}`).once('value').then(friendSnap => {
+                        const friendData = friendSnap.val() || {};
+                        const fName = friendData.username || child.val().username;
+                        const fPic = friendData.profilePic || '';
+                        const fBio = friendData.bio || '';
+
+                        let avatarHtml = fPic 
+                            ? `<img src="${fPic}" class="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full object-cover border border-slate-200 shadow-inner shrink-0">`
+                            : `<div class="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs shrink-0"><i class="fa-solid fa-user"></i></div>`;
+
+                        friendsListDiv.innerHTML += `
+                            <div onclick="openUserDetails('${friendId}', '${fName}', '${fPic}', '${fBio}')" class="glass p-3 rounded-xl flex justify-between items-center text-xs bg-white shadow-sm border border-slate-200 cursor-pointer hover:bg-slate-50 transition">
+                                <div class="flex items-center gap-2.5">
+                                    ${avatarHtml}
+                                    <span class="font-bold text-slate-800">${fName}</span>
+                                </div>
+                                <span class="text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold border border-emerald-200">Amigos</span>
+                            </div>
+                        `;
+                    });
+                });
+            });
+
+            db.ref(`friendRequests`).on('value', (snapshot) => {
+                mySentRequests = {};
+                if (snapshot.exists()) {
+                    snapshot.forEach(targetSnap => {
+                        if (targetSnap.hasChild(currentUser.id)) {
+                            mySentRequests[targetSnap.key] = true;
+                        }
+                    });
+                }
+            });
+
+            db.ref(`friendRequests/${currentUser.id}`).on('value', (snapshot) => {
+                const reqList = document.getElementById('friend-requests-list');
+                reqList.innerHTML = '';
+
+                if (!snapshot.exists()) {
+                    reqList.innerHTML = `<p class="text-xs text-slate-400 italic">Nenhum pedido pendente.</p>`;
+                    return;
+                }
+
+                snapshot.forEach(child => {
+                    const req = child.val();
+                    db.ref(`users/${req.fromId}`).once('value').then(senderSnap => {
+                        const senderData = senderSnap.val() || {};
+                        const sPic = senderData.profilePic || '';
+                        const sBio = senderData.bio || '';
+
+                        let avatarHtml = sPic 
+                            ? `<img src="${sPic}" class="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full object-cover border border-slate-200 shadow-inner shrink-0">`
+                            : `<div class="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs shrink-0"><i class="fa-solid fa-user"></i></div>`;
+
+                        reqList.innerHTML += `
+                            <div class="glass p-3 rounded-xl flex justify-between items-center text-xs bg-white shadow-sm border border-slate-200">
+                                <div class="flex items-center gap-2.5 cursor-pointer" onclick="openUserDetails('${req.fromId}', '${req.fromUsername}', '${sPic}', '${sBio}')">
+                                    ${avatarHtml}
+                                    <span class="font-bold text-indigo-600">${req.fromUsername}</span>
+                                </div>
+                                <div class="flex gap-1.5">
+                                    <button onclick="acceptFriend('${req.fromId}', '${req.fromUsername}')" class="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-2.5 py-1.5 rounded-lg font-semibold transition">Aceitar</button>
+                                    <button onclick="rejectFriend('${req.fromId}')" class="bg-red-100 text-red-700 hover:bg-red-200 px-2.5 py-1.5 rounded-lg font-semibold transition">Recusar</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                });
+            });
+        }
+
+        function renderRooms(rooms) {
+            const list = document.getElementById('rooms-list');
+            list.innerHTML = '';
+            
+            if (rooms.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-400 text-center py-6 italic">Nenhuma sala encontrada.</p>`;
+                return;
+            }
+
+            rooms.forEach(room => {
+                const isPrivate = room.type === 'private';
+                list.innerHTML += `
+                    <div class="glass p-3.5 rounded-2xl flex justify-between items-center transition bg-white shadow-sm border border-slate-200 hover:border-slate-300">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-bold text-sm text-slate-900">${room.name}</h4>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold ${isPrivate ? 'bg-purple-50 text-purple-600 border border-purple-200' : 'bg-indigo-50 text-indigo-600 border border-indigo-200'}">
+                                    <i class="fa-solid ${isPrivate ? 'fa-lock' : 'fa-globe'}"></i> ${isPrivate ? 'Privada' : 'Pública'}
+                                </span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 mt-0.5 block">Criado por: ${room.createdBy}</span>
+                        </div>
+                        <button onclick="tryJoinRoom('${room.id}', '${room.type}', '${room.password || ''}')" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm">
+                            Entrar
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function filterRooms() {
+            const query = document.getElementById('search-room').value.toLowerCase();
+            const filtered = allRoomsCache.filter(r => r.name.toLowerCase().includes(query));
+            renderRooms(filtered);
+        }
+
+        function tryJoinRoom(roomId, type, password) {
+            if (type === 'public') {
+                alert("Entrando na sala pública...");
+            } else {
+                selectedRoomToJoin = { roomId, password };
+                document.getElementById('enter-room-password').value = '';
+                document.getElementById('modal-room-password').classList.remove('hidden');
+                document.getElementById('modal-room-password').classList.add('flex');
+            }
+        }
+
+        function verifyRoomPassword() {
+            const inputPass = document.getElementById('enter-room-password').value.trim();
+            if (inputPass === selectedRoomToJoin.password) {
+                closeModal('modal-room-password');
+                alert("Senha correta! Entrando na sala privada...");
+            } else {
+                alert("Senha incorreta!");
+            }
+        }
+
+        function searchUsersAutocomplete() {
+            const query = document.getElementById('search-friend-input').value.trim().toLowerCase();
+            const resultsBox = document.getElementById('autocomplete-results');
+
+            if (!query) {
+                resultsBox.classList.add('hidden');
+                resultsBox.innerHTML = '';
+                return;
+            }
+
+            db.ref('users').once('value', (snapshot) => {
+                resultsBox.innerHTML = '';
+                if (!snapshot.exists()) {
+                    resultsBox.classList.add('hidden');
+                    return;
+                }
+
+                let matches = 0;
+                snapshot.forEach(child => {
+                    const user = child.val();
+                    if (user.id !== currentUser.id && user.username.toLowerCase().includes(query)) {
+                        matches++;
+                        let avatarHtml = user.profilePic 
+                            ? `<img src="${user.profilePic}" class="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full object-cover border border-slate-200 shadow-inner shrink-0">`
+                            : `<div class="w-8 h-8 min-w-[32px] min-h-[32px] rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs shrink-0"><i class="fa-solid fa-user"></i></div>`;
+
+                        let isFriend = myFriendsList[user.id];
+                        let isRequested = mySentRequests[user.id];
+
+                        let actionBtnHtml = '';
+                        if (isFriend) {
+                            actionBtnHtml = `<span class="text-emerald-600 font-bold text-[11px] bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100">Amigos</span>`;
+                        } else if (isRequested) {
+                            actionBtnHtml = `<span class="text-amber-600 font-bold text-[11px] bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100">Solicitado</span>`;
+                        } else {
+                            actionBtnHtml = `<button onclick="event.stopPropagation(); sendFriendRequestTo('${user.id}', '${user.username}')" class="text-primary font-bold text-[11px] bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100 hover:bg-indigo-100 transition">Adicionar</button>`;
+                        }
+
+                        resultsBox.innerHTML += `
+                            <div onclick="openUserDetails('${user.id}', '${user.username}', '${user.profilePic || ''}', '${user.bio || ''}')" class="p-2.5 hover:bg-slate-50 cursor-pointer flex justify-between items-center border-b border-slate-100 last:border-none text-xs">
+                                <div class="flex items-center gap-2.5">
+                                    ${avatarHtml}
+                                    <span class="font-bold text-slate-800">${user.username}</span>
+                                </div>
+                                <div>${actionBtnHtml}</div>
+                            </div>
+                        `;
+                    }
+                });
+
+                if (matches > 0) {
+                    resultsBox.classList.remove('hidden');
+                } else {
+                    resultsBox.innerHTML = `<div class="p-3 text-xs text-slate-400 italic text-center">Nenhum usuário encontrado</div>`;
+                    resultsBox.classList.remove('hidden');
                 }
             });
         }
 
-        // --- CHAT PRIVADO ---
-        window.enviarMensagemChat = function() {
-            const txt = document.getElementById('chatInput').value;
-            if(!txt) return;
-            const chatRef = ref(db, 'chats/' + (conexaoAtivaId || meuId));
-            push(chatRef, { remetente: meuName, texto: txt });
-            document.getElementById('chatInput').value = '';
+        function openUserDetails(userId, username, profilePic, bio) {
+            document.getElementById('autocomplete-results').classList.add('hidden');
+            document.getElementById('detail-username').innerText = username;
+            document.getElementById('detail-bio').innerText = bio || 'Sem biografia informada.';
+            
+            const avatarContainer = document.getElementById('detail-avatar-container');
+            if (profilePic) {
+                avatarContainer.innerHTML = `<img src="${profilePic}" class="w-full h-full object-cover">`;
+            } else {
+                avatarContainer.innerHTML = `<i class="fa-solid fa-user text-slate-400 text-3xl"></i>`;
+            }
+
+            const actionContainer = document.getElementById('detail-action-container');
+            let isFriend = myFriendsList[userId];
+            let isRequested = mySentRequests[userId];
+
+            if (isFriend) {
+                actionContainer.innerHTML = `<span class="text-emerald-600 font-bold text-xs bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200 inline-block"><i class="fa-solid fa-check"></i> Vocês já são amigos</span>`;
+            } else if (isRequested) {
+                actionContainer.innerHTML = `<span class="text-amber-600 font-bold text-xs bg-amber-50 px-4 py-2 rounded-xl border border-amber-200 inline-block"><i class="fa-solid fa-clock"></i> Solicitação pendente</span>`;
+            } else {
+                actionContainer.innerHTML = `<button onclick="sendFriendRequestTo('${userId}', '${username}'); closeModal('modal-user-details');" class="bg-primary hover:bg-indigo-600 text-white font-bold text-xs px-6 py-2.5 rounded-xl shadow transition">Adicionar Amigo</button>`;
+            }
+
+            document.getElementById('modal-user-details').classList.remove('hidden');
+            document.getElementById('modal-user-details').classList.add('flex');
         }
 
-        onValue(ref(db, 'chats/' + meuId), (snapshot) => {
-            const data = snapshot.val();
-            const box = document.getElementById('chatMessages');
-            box.innerHTML = '';
-            if(data) {
-                Object.values(data).forEach(m => {
-                    box.innerHTML += `<b>${m.remetente}:</b> ${m.texto}<br>`;
-                });
-                box.scrollTop = box.scrollHeight;
-            }
-        });
+        function sendFriendRequestTo(targetId, targetUsername) {
+            db.ref(`friendRequests/${targetId}/${currentUser.id}`).set({
+                fromId: currentUser.id,
+                fromUsername: currentUser.username
+            }).then(() => {
+                alert(`Solicitação de amizade enviada para ${targetUsername}!`);
+                document.getElementById('search-friend-input').value = '';
+                document.getElementById('autocomplete-results').classList.add('hidden');
+            });
+        }
+
+        function acceptFriend(fromId, fromUsername) {
+            db.ref(`friends/${currentUser.id}/${fromId}`).set({ username: fromUsername });
+            db.ref(`friends/${fromId}/${currentUser.id}`).set({ username: currentUser.username });
+            db.ref(`friendRequests/${currentUser.id}/${fromId}`).remove();
+        }
+
+        function rejectFriend(fromId) {
+            db.ref(`friendRequests/${currentUser.id}/${fromId}`).remove();
+        }
     </script>
 </body>
 </html>

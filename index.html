@@ -2,287 +2,352 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bíblia Sagrada 3D Online</title>
-    <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Avançado de Conexão Remota</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { 
-            background: radial-gradient(circle, #2c2c2c 0%, #111 100%); 
-            height: 100vh; 
-            width: 100vw;
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-            overflow: hidden; 
-            font-family: 'Georgia', serif; 
-            position: fixed;
-        }
-
-        #nav-panel { 
-            position: fixed; 
-            top: 15px; 
-            background: rgba(20, 20, 20, 0.95); 
-            padding: 10px 15px; 
-            border-radius: 8px; 
-            z-index: 1000; 
-            display: flex; 
-            gap: 8px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.8);
-            border: 1px solid #444;
-            max-width: 95vw;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        #nav-panel select, #nav-panel button {
-            padding: 6px 10px;
-            background: #2c2c2c;
-            color: #d4af37;
-            border: 1px solid #555;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            font-family: 'Georgia', serif;
-            outline: none;
-            cursor: pointer;
-        }
-
-        #nav-panel button {
-            background: #5c1d1d;
-            border-color: #7a2828;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-
-        #nav-panel button:hover {
-            background: #7a2828;
-        }
-
-        /* Palco 3D imitando a mesa com leve volume */
-        #book-container {
-            perspective: 2500px;
-            margin-top: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transform: rotateX(12deg);
-            transform-style: preserve-3d;
-            width: 100%;
-            height: 75vh;
-        }
-
-        #book { 
-            box-shadow: 0 35px 70px rgba(0,0,0,0.9), 0 0 30px rgba(0,0,0,0.5);
-            display: none;
-        }
-
-        /* Textura e estilo realista das páginas */
-        .page {
-            background-color: #fbf8ef;
-            background-image: linear-gradient(to right, #d3cbb7 0%, #fbf8ef 4%, #fbf8ef 96%, #d3cbb7 100%);
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            border: 1px solid #c5bba4;
-            overflow: hidden;
-            user-select: none;
-        }
-
-        .page-cover {
-            background-color: #3a1010;
-            background-image: linear-gradient(135deg, #5c1d1d 0%, #220808 100%);
-            color: #d4af37;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 25px;
-            border: 2px solid #1a0505;
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.7);
-        }
-
-        .page h2 { 
-            font-size: 1rem; 
-            color: #5c1d1d; 
-            margin-bottom: 10px; 
-            border-bottom: 1px solid #d3cbb7; 
-            padding-bottom: 5px; 
-        }
-
-        .page p { 
-            font-size: 0.78rem; 
-            line-height: 1.5; 
-            text-align: justify; 
-            margin-bottom: 6px; 
-        }
-
-        .page p span { 
-            font-size: 0.62rem; 
-            color: #8c7b60; 
-            font-weight: bold; 
-            margin-right: 4px; 
-        }
-
-        .page-footer { 
-            text-align: center; 
-            font-size: 0.65rem; 
-            color: #888; 
-            border-top: 1px solid #e8e2d0;
-            padding-top: 6px;
-        }
-
-        #loading {
-            color: #d4af37;
-            font-size: 1.1rem;
-            position: absolute;
-            font-style: italic;
-        }
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; padding: 15px; margin: 0; }
+        .card { background: #1e1e1e; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #333; }
+        button { background: #4CAF50; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; margin: 5px 0; }
+        button:hover { background: #45a049; }
+        .btn-danger { background: #f44336; }
+        .btn-danger:hover { background: #d32f2f; }
+        select, input { padding: 8px; margin-right: 10px; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 4px; }
+        .log { background: #000; padding: 10px; font-family: monospace; height: 100px; overflow-y: scroll; border-radius: 4px; font-size: 12px; }
+        video { width: 100%; max-height: 250px; background: #000; border-radius: 4px; margin-top: 10px; }
+        .chat-box { height: 120px; overflow-y: scroll; background: #111; padding: 8px; border-radius: 4px; margin-bottom: 8px; font-size: 13px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        @media(max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-    <div id="nav-panel">
-        <select id="select-book"></select>
-        <select id="select-chapter"></select>
-        <button onclick="buscarTextoBiblico()">Abrir</button>
+    <h2>Central de Controle Remoto (Firebase)</h2>
+
+    <!-- Configuração Inicial -->
+    <div class="card" id="cardConfig">
+        <h3>1. Autenticação na Rede</h3>
+        <input type="text" id="deviceName" placeholder="Nome do Aparelho" value="Dispositivo_Teste">
+        <select id="deviceType">
+            <option value="conector">Conector (Compartilha Acesso)</option>
+            <option value="recebedor">Recebedor (Controla/Acessa)</option>
+        </select>
+        <button onclick="registrarDispositivo()">Entrar na Rede</button>
     </div>
 
-    <div id="loading">Conectando à Bíblia online...</div>
+    <!-- Painel do Conector -->
+    <div class="card" id="interfaceConector" style="display:none;">
+        <h3>Painel do Conector</h3>
+        <p>Status: <span id="statusConector" style="color: yellow;">Aguardando conexões...</span></p>
+        <div id="divSolicitacao" style="display:none;">
+            <p>Solicitação de: <b id="solicitanteNome"></b></p>
+            <button onclick="aceitarConexao()">Aceitar Acesso</button>
+        </div>
+        <div id="painelConectorAtivo" style="display:none;">
+            <p style="color: lightgreen;"><b>Sessão Ativa com o Recebedor!</b></p>
+            <button onclick="iniciarCompartilhamentoTela()">Compartilhar Tela (WebRTC)</button>
+            <video id="localVideo" autoplay playsinline muted></video>
+        </div>
+    </div>
 
-    <div id="book-container">
-        <div id="book">
-            <div class="page page-cover">
-                <div>
-                    <h1 style="font-size: 1.8rem; border-bottom: 2px solid #d4af37; padding-bottom: 8px; margin-bottom: 8px;">BÍBLIA SAGRADA</h1>
-                    <p style="font-size: 0.85rem; font-style: italic;">Carregando dados da rede...</p>
-                </div>
+    <!-- Painel do Recebedor -->
+    <div class="card" id="interfaceRecebedor" style="display:none;">
+        <h3>Painel do Recebedor</h3>
+        <p>Conectores Disponíveis:</p>
+        <select id="listaConectores"></select>
+        <button onclick="solicitarConexao()">Solicitar Conexão</button>
+        <p>Status: <span id="statusRecebedor" style="color: yellow;">Desconectado</span></p>
+
+        <div id="painelRecebedorAtivo" style="display:none; margin-top: 15px;">
+            <hr>
+            <h4>Controle e Monitoramento Remoto</h4>
+            
+            <!-- IoT / Comandos -->
+            <div class="card">
+                <h5>Automação IoT (Relé / Luzes)</h5>
+                <button onclick="enviarComandoIoT('ligar')">Ligar Dispositivo</button>
+                <button class="btn-danger" onclick="enviarComandoIoT('desligar')">Desligar Dispositivo</button>
+                <p>Estado do IoT: <b id="iotStatus">Desconhecido</b></p>
+            </div>
+
+            <!-- Suporte Técnico / Status -->
+            <div class="card">
+                <h5>Suporte Técnico & Informações</h5>
+                <p>Nível de Bateria: <b id="infoBateria">-</b></p>
+                <p>Comando IoT Recebido pelo Conector: <b id="comandoAtualRecebido">Nenhum</b></p>
+            </div>
+
+            <!-- Espelhamento -->
+            <div class="card">
+                <h5>Tela Remota do Conector</h5>
+                <video id="remoteVideo" autoplay playsinline></video>
             </div>
         </div>
     </div>
 
-    <script>
-        let pageFlip = null;
+    <!-- Sistema de Chat Integrado -->
+    <div class="card" id="cardChat" style="display:none;">
+        <h3>Chat Privado da Sessão</h3>
+        <div id="chatMessages" class="chat-box"></div>
+        <input type="text" id="chatInput" placeholder="Digite sua mensagem..." style="width: 70%;">
+        <button onclick="enviarMensagemChat()">Enviar</button>
+    </div>
 
-        // Estrutura de livros suportados pela API pública online
-        const bibliaEstrutura = {
-            "Gênesis": 50, "Êxodo": 40, "Levítico": 27, "Números": 36, "Deuteronômio": 34,
-            "Josué": 24, "Juízes": 21, "Rute": 4, "1 Samuel": 31, "2 Samuel": 24,
-            "1 Reis": 22, "2 Reis": 25, "Salmos": 150, "Provérbios": 31, "Isaías": 66,
-            "Mateus": 28, "Marcos": 16, "Lucas": 24, "João": 21, "Atos": 28, "Apocalipse": 22
+    <!-- Log de Atividades -->
+    <div class="card">
+        <h3>Log do Sistema</h3>
+        <div id="logBox" class="log"></div>
+    </div>
+
+    <!-- Firebase SDK & WebRTC Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update, remove, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTkq0uXy5kHg9N8rj9--Dooh8cuguYxPE",
+            authDomain: "subjectrobot-49600.firebaseapp.com",
+            databaseURL: "https://subjectrobot-49600-default-rtdb.firebaseio.com",
+            projectId: "subjectrobot-49600",
+            storageBucket: "subjectrobot-49600.appspot.com",
+            appId: "1:731604558049:android:7f47b30b289445814017a0"
         };
 
-        const apiBookMap = {
-            "Gênesis": "genesis", "Êxodo": "exodus", "Levítico": "leviticus", "Números": "numbers", "Deuteronômio": "deuteronomy",
-            "Josué": "joshua", "Juízes": "judges", "Rute": "ruth", "1 Samuel": "1samuel", "2 Samuel": "2samuel",
-            "1 Reis": "1kings", "2 Reis": "2kings", "Salmos": "psalms", "Provérbios": "proverbs", "Isaías": "isaiah",
-            "Mateus": "matthew", "Marcos": "mark", "Lucas": "luke", "João": "john", "Atos": "acts", "Apocalipse": "revelation"
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let meuId = 'user_' + Math.floor(Math.random() * 100000);
+        let meuTipo = '';
+        let meuName = '';
+        let conexaoAtivaId = null;
+        let peerConnection;
+        let localStream;
+
+        const servers = {
+            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
         };
 
-        const selectBook = document.getElementById('select-book');
-        const selectChapter = document.getElementById('select-chapter');
-        const loadingEl = document.getElementById('loading');
-        const bookEl = document.getElementById('book');
-
-        // Preenche o seletor de livros
-        for (let livro in bibliaEstrutura) {
-            let opt = document.createElement('option');
-            opt.value = livro;
-            opt.innerText = livro;
-            selectBook.appendChild(opt);
+        window.logar = function(msg) {
+            const box = document.getElementById('logBox');
+            box.innerHTML += `[${new Date().toLocaleTimeString()}] ${msg}<br>`;
+            box.scrollTop = box.scrollHeight;
         }
 
-        // Atualiza os capítulos de acordo com o livro escolhido
-        selectBook.addEventListener('change', () => {
-            const total = bibliaEstrutura[selectBook.value] || 1;
-            selectChapter.innerHTML = '';
-            for (let i = 1; i <= total; i++) {
-                let opt = document.createElement('option');
-                opt.value = i;
-                opt.innerText = `Cap. ${i}`;
-                selectChapter.appendChild(opt);
-            }
-        });
+        window.registrarDispositivo = function() {
+            meuName = document.getElementById('deviceName').value || meuId;
+            meuTipo = document.getElementById('deviceType').value;
+            const refDev = ref(db, 'devices/' + meuId);
 
-        selectBook.dispatchEvent(new Event('change'));
+            set(refDev, {
+                id: meuId,
+                nome: meuName,
+                tipo: meuTipo,
+                status: 'disponivel',
+                bateria: '85% (Simulada)',
+                iot: 'desligado'
+            }).then(() => {
+                logar(`Registrado como ${meuTipo.toUpperCase()} (${meuName})`);
+                document.getElementById('cardConfig').style.display = 'none';
+                document.getElementById('cardChat').style.display = 'block';
 
-        async function buscarTextoBiblico() {
-            loadingEl.style.display = 'block';
-            loadingEl.innerText = "Buscando dados da rede...";
-            bookEl.style.display = 'none';
-
-            const livroPt = selectBook.value;
-            const livroApi = apiBookMap[livroPt] || "genesis";
-            const cap = selectChapter.value || 1;
-
-            try {
-                // Requisição HTTP via fetch para a API online
-                const resposta = await fetch(`https://bible-api.com/${livroApi}+${cap}`);
-                if (!resposta.ok) throw new Error("Erro na requisição da API");
-
-                const dados = await resposta.json();
-                renderizarLivro3D(dados.reference, dados.verses);
-
-            } catch (erro) {
-                console.error("Erro de rede:", erro);
-                loadingEl.innerText = "Erro ao buscar dados da rede. Verifique a conexão.";
-            }
-        }
-
-        function renderizarLivro3D(referencia, versiculos) {
-            bookEl.innerHTML = '';
-
-            // Capa interna do livro
-            let capa = document.createElement('div');
-            capa.className = 'page page-cover';
-            capa.innerHTML = `<div><h2 style="color: #d4af37; font-size: 1.3rem; margin-bottom: 5px;">${referencia}</h2><p style="font-size:0.75rem; font-style: italic;">Santa Escritura</p></div>`;
-            bookEl.appendChild(capa);
-
-            // Paginação dinâmica dos versículos vindos da rede
-            const porPagina = 6;
-            for (let i = 0; i < versiculos.length; i += porPagina) {
-                let pedaco = versiculos.slice(i, i + porPagina);
-                let pDiv = document.createElement('div');
-                pDiv.className = 'page';
-                
-                let htmlVersiculos = pedaco.map(v => `<p><span>${v.verse}</span> ${v.text}</p>`).join('');
-                pDiv.innerHTML = `<div><h2>${referencia}</h2>${htmlVersiculos}</div><div class="page-footer">${Math.floor(i/porPagina) + 1}</div>`;
-                bookEl.appendChild(pDiv);
-            }
-
-            loadingEl.style.display = 'none';
-            bookEl.style.display = 'block';
-
-            if (pageFlip) {
-                pageFlip.destroy();
-            }
-
-            // Motor gráfico 3D com animações suaves e sombras dinâmicas de folha
-            pageFlip = new St.PageFlip(bookEl, {
-                width: 340,
-                height: 480,
-                size: 'stretch',
-                minWidth: 260,
-                maxWidth: 500,
-                minHeight: 380,
-                maxHeight: 700,
-                flippingTime: 700,
-                maxShadowOpacity: 0.75, // Sombra 3D profunda ao virar a página
-                showCover: true,
-                mobileScrollSupport: true,
-                drawShadow: true,
-                usePortrait: true
+                if(meuTipo === 'conector') {
+                    document.getElementById('interfaceConector').style.display = 'block';
+                    escutarConector();
+                } else {
+                    document.getElementById('interfaceRecebedor').style.display = 'block';
+                    listarConectores();
+                }
             });
 
-            pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+            window.addEventListener('beforeunload', () => remove(refDev));
         }
 
-        // Carrega o primeiro capítulo automaticamente ao publicar online
-        window.onload = () => {
-            buscarTextoBiblico();
-        };
+        // --- CONECTOR LOGIC ---
+        function escutarConector() {
+            const refMe = ref(db, 'devices/' + meuId);
+            onValue(refMe, (snapshot) => {
+                const data = snapshot.val();
+                if(!data) return;
+
+                if(data.status === 'solicitando') {
+                    conexaoAtivaId = data.recebedorId;
+                    document.getElementById('solicitanteNome').innerText = data.recebedorNome;
+                    document.getElementById('divSolicitacao').style.display = 'block';
+                    logar(`Solicitação recebida de ${data.recebedorNome}`);
+                }
+
+                // Tratar WebRTC Signaling via Firebase
+                if(data.offer && !peerConnection) {
+                    tratarOfferWebRTC(data.offer);
+                }
+                if(data.candidate && peerConnection) {
+                    peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                }
+            });
+        }
+
+        window.aceitarConexao = function() {
+            update(ref(db, 'devices/' + meuId), { status: 'conectado' });
+            if(conexaoAtivaId) {
+                update(ref(db, 'devices/' + conexaoAtivaId), { status: 'conectado' });
+            }
+            document.getElementById('divSolicitacao').style.display = 'none';
+            document.getElementById('statusConector').innerText = 'CONECTADO COM SUCESSO';
+            document.getElementById('statusConector').style.color = 'lightgreen';
+            document.getElementById('painelConectorAtivo').style.display = 'block';
+            logar('Conexão aceita.');
+        }
+
+        // --- RECEBEDOR LOGIC ---
+        function listarConectores() {
+            onValue(ref(db, 'devices'), (snapshot) => {
+                const data = snapshot.val();
+                const select = document.getElementById('listaConectores');
+                select.innerHTML = '';
+                if(!data) return;
+
+                Object.keys(data).forEach(id => {
+                    let dev = data[id];
+                    if(dev.tipo === 'conector' && dev.status === 'disponivel') {
+                        let opt = document.createElement('option');
+                        opt.value = dev.id;
+                        opt.text = `${dev.nome} (${dev.id})`;
+                        select.appendChild(opt);
+                    }
+                });
+            });
+        }
+
+        window.solicitarConexao = function() {
+            const conectorId = document.getElementById('listaConectores').value;
+            if(!conectorId) return alert('Selecione um conector');
+            conexaoAtivaId = conectorId;
+
+            update(ref(db, 'devices/' + conectorId), {
+                status: 'solicitando',
+                recebedorId: meuId,
+                recebedorNome: meuName
+            }).then(() => {
+                document.getElementById('statusRecebedor').innerText = 'Aguardando aprovação...';
+                logar('Solicitação enviada ao conector.');
+
+                onValue(ref(db, 'devices/' + conectorId), (snapshot) => {
+                    const data = snapshot.val();
+                    if(data && data.status === 'conectado') {
+                        document.getElementById('statusRecebedor').innerText = 'CONECTADO!';
+                        document.getElementById('statusRecebedor').style.color = 'lightgreen';
+                        document.getElementById('painelRecebedorAtivo').style.display = 'block';
+                        
+                        // Sincronizar dados de suporte técnico
+                        document.getElementById('infoBateria').innerText = data.bateria || 'N/A';
+                        document.getElementById('iotStatus').innerText = data.iot || 'desligado';
+
+                        // Iniciar WebRTC como Recebedor
+                        iniciarConexaoWebRTCRecebedor(conectorId);
+                    }
+                });
+            });
+        }
+
+        // --- IoT & SUPORTE ---
+        window.enviarComandoIoT = function(acao) {
+            if(!conexaoAtivaId) return;
+            update(ref(db, 'devices/' + conexaoAtivaId), { iot: acao });
+            logar(`Comando IoT enviado: ${acao}`);
+        }
+
+        // --- WEBRTC (Espelhamento de Tela) ---
+        window.iniciarCompartilhamentoTela = async function() {
+            try {
+                localStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+                document.getElementById('localVideo').srcObject = localStream;
+
+                peerConnection = new RTCPeerConnection(servers);
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+                peerConnection.onicecandidate = event => {
+                    if (event.candidate) {
+                        update(ref(db, 'devices/' + meuId), { candidate: event.candidate.toJSON() });
+                    }
+                };
+
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                update(ref(db, 'devices/' + meuId), { offer: { type: offer.type, sdp: offer.sdp } });
+                logar('Transmissão de tela iniciada.');
+            } catch (err) {
+                alert('Erro ao capturar tela: ' + err.message);
+            }
+        }
+
+        async function tratarOfferWebRTC(offer) {
+            peerConnection = new RTCPeerConnection(servers);
+            
+            peerConnection.ontrack = event => {
+                document.getElementById('remoteVideo').srcObject = event.streams[0];
+                logar('Recebendo fluxo de vídeo remoto.');
+            };
+
+            peerConnection.onicecandidate = event => {
+                if (event.candidate && conexaoAtivaId) {
+                    update(ref(db, 'devices/' + conexaoAtivaId), { candidate: event.candidate.toJSON() });
+                }
+            };
+
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+
+            update(ref(db, 'devices/' + conexaoAtivaId), { answer: { type: answer.type, sdp: answer.sdp } });
+        }
+
+        async function iniciarConexaoWebRTCRecebedor(conectorId) {
+            peerConnection = new RTCPeerConnection(servers);
+
+            peerConnection.ontrack = event => {
+                document.getElementById('remoteVideo').srcObject = event.streams[0];
+                logar('Tela remota conectada com sucesso!');
+            };
+
+            peerConnection.onicecandidate = event => {
+                if (event.candidate) {
+                    update(ref(db, 'devices/' + conectorId), { candidate: event.candidate.toJSON() });
+                }
+            };
+
+            onValue(ref(db, 'devices/' + conectorId), async (snapshot) => {
+                const data = snapshot.val();
+                if(data && data.answer && !peerConnection.currentRemoteDescription) {
+                    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                }
+                if(data && data.candidate) {
+                    try {
+                        await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                    } catch(e){}
+                }
+            });
+        }
+
+        // --- CHAT PRIVADO ---
+        window.enviarMensagemChat = function() {
+            const txt = document.getElementById('chatInput').value;
+            if(!txt) return;
+            const chatRef = ref(db, 'chats/' + (conexaoAtivaId || meuId));
+            push(chatRef, { remetente: meuName, texto: txt });
+            document.getElementById('chatInput').value = '';
+        }
+
+        onValue(ref(db, 'chats/' + meuId), (snapshot) => {
+            const data = snapshot.val();
+            const box = document.getElementById('chatMessages');
+            box.innerHTML = '';
+            if(data) {
+                Object.values(data).forEach(m => {
+                    box.innerHTML += `<b>${m.remetente}:</b> ${m.texto}<br>`;
+                });
+                box.scrollTop = box.scrollHeight;
+            }
+        });
     </script>
 </body>
 </html>

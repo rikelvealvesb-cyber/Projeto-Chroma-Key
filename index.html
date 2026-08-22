@@ -18,6 +18,12 @@
 </head>
 <body class="bg-gray-100 font-sans flex flex-col h-screen justify-between text-base text-gray-900">
 
+    <!-- Indicador de Carregamento Inicial -->
+    <div id="tela-loading" class="fixed inset-0 bg-gray-100 z-50 flex flex-col items-center justify-center p-4">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-black mb-3"></div>
+        <p class="text-sm font-bold text-gray-700">Carregando sistema...</p>
+    </div>
+
     <!-- Modal de Alerta/Confirmação Personalizado -->
     <div id="modal-personalizado" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center border border-gray-300">
@@ -29,21 +35,32 @@
         </div>
     </div>
 
-    <!-- Modal de Identificação / Bloqueio / Banimento -->
+    <!-- Modal de Autenticação / Login / Cadastro por E-mail -->
     <div id="modal-usuario" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center border border-gray-300">
-            <h2 id="modal-titulo" class="text-xl font-bold text-gray-900 mb-2">Identificação do Dispositivo</h2>
-            <p id="modal-subtitulo" class="text-xs text-gray-600 mb-4">Informe seu nome. Como este dispositivo é registrado pelo ID único, seu nome ficará fixo após o cadastro.</p>
+            <h2 id="modal-titulo" class="text-xl font-bold text-gray-900 mb-2">Acesso ao Sistema</h2>
+            <p id="modal-subtitulo" class="text-xs text-gray-600 mb-4">Entre com seu e-mail e senha. Caso seja o primeiro acesso, criaremos sua conta e enviaremos um e-mail de verificação.</p>
             
-            <div id="container-input-nome">
-                <input type="text" id="input-nome-inicial" placeholder="Seu nome completo..." class="w-full border border-gray-400 rounded-xl p-3 text-base mb-4 outline-none focus:ring-2 focus:ring-black text-center font-medium bg-gray-50">
-                <button onclick="registrarNovoUsuario()" class="w-full bg-black text-white py-3 rounded-xl text-base font-bold shadow hover:bg-gray-800 transition">Acessar Sistema</button>
+            <div id="container-input-auth" class="flex flex-col gap-3">
+                <input type="text" id="input-nome-cadastro" placeholder="Seu Nome Completo (Apenas para 1º acesso)" class="w-full border border-gray-300 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-black bg-gray-50">
+                <input type="email" id="input-email-auth" placeholder="Seu e-mail..." class="w-full border border-gray-300 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-black bg-gray-50">
+                <input type="password" id="input-senha-auth" placeholder="Sua senha..." class="w-full border border-gray-300 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-black bg-gray-50">
+                <button onclick="autenticarUsuario()" class="w-full bg-black text-white py-3 rounded-xl text-base font-bold shadow hover:bg-gray-800 transition mt-2">Entrar / Cadastrar</button>
             </div>
 
-            <div id="container-mensagem-banido" class="hidden">
-                <div class="bg-red-50 border border-red-200 p-4 rounded-xl mb-4 text-red-700 text-sm font-semibold">
-                    🚫 Acesso Negado: Este dispositivo foi banido pelo Administrador.
+            <div id="container-mensagem-banido" class="hidden mt-4">
+                <div class="bg-red-50 border border-red-200 p-4 rounded-xl text-red-700 text-sm font-semibold">
+                    🚫 Acesso Negado: Este usuário foi banido pelo Administrador.
                 </div>
+                <button onclick="fazerLogoutAuth()" class="w-full bg-gray-200 text-gray-800 py-2 rounded-xl text-xs font-bold mt-3">Sair da Conta</button>
+            </div>
+            
+            <div id="container-verificacao-pendente" class="hidden mt-4">
+                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl text-yellow-800 text-sm font-semibold mb-3">
+                    ✉️ Enviamos um link de verificação para o seu e-mail. Por favor, confirme para liberar o acesso total.
+                </div>
+                <button onclick="reenviarVerificacao()" class="w-full bg-gray-800 text-white py-2 rounded-xl text-xs font-bold mb-2">Reenviar E-mail de Verificação</button>
+                <button onclick="fazerLogoutAuth()" class="w-full bg-gray-200 text-gray-800 py-2 rounded-xl text-xs font-bold">Sair / Trocar Conta</button>
             </div>
         </div>
     </div>
@@ -61,8 +78,8 @@
         </div>
     </div>
 
-    <!-- Cabeçalho / Abas Mobile -->
-    <header class="bg-black text-white shadow-md">
+    <!-- Cabeçalho / Abas Mobile (Inicia Oculto) -->
+    <header id="app-header" class="bg-black text-white shadow-md hidden">
         <div class="p-4 flex justify-between items-center">
             <div>
                 <h1 class="font-bold text-lg tracking-wide">Sistema de Separação</h1>
@@ -70,19 +87,19 @@
             </div>
             <div class="flex items-center gap-2">
                 <button onclick="alternarModoVisualizacao()" id="btn-modo-visual" class="text-xs bg-gray-800 text-gray-200 px-2.5 py-1.5 rounded font-medium border border-gray-700 hover:bg-gray-700 transition">Modo: Mobile</button>
-                <span id="status-conexao" class="text-xs bg-gray-800 text-gray-200 px-2.5 py-1.5 rounded font-medium border border-gray-700">Online</span>
+                <button onclick="fazerLogoutAuth()" class="text-xs bg-red-900 text-white px-2.5 py-1.5 rounded font-medium border border-red-700 hover:bg-red-800 transition">Sair</button>
             </div>
         </div>
         <div class="flex border-t border-gray-800 text-xs font-semibold">
             <button onclick="mudarAba('caixa')" id="tab-caixa" class="flex-1 py-3 text-center bg-gray-900 border-b-4 border-white text-white">Separação</button>
             <button onclick="mudarAba('estoque')" id="tab-estoque" class="flex-1 py-3 text-center text-gray-400 hover:text-white">Estoque</button>
             <button onclick="mudarAba('vendas')" id="tab-vendas" class="flex-1 py-3 text-center text-gray-400 hover:text-white">Saída</button>
-            <button onclick="tentarAbrirAdm()" id="tab-adm" class="flex-1 py-3 text-center text-gray-400 hover:text-white">Adm</button>
+            <button onclick="tentarAbrirAdm()" id="tab-adm" class="flex-1 py-3 text-center text-gray-400 hover:text-white hidden">Adm</button>
         </div>
     </header>
 
-    <!-- CONTEÚDO DA ABA SEPARAÇÃO -->
-    <main id="conteudo-caixa" class="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+    <!-- CONTEÚDO DA ABA SEPARAÇÃO (Inicia Oculto) -->
+    <main id="conteudo-caixa" class="flex-1 overflow-y-auto p-4 flex-col gap-4 hidden">
         <div id="aviso-permissao-caixa" class="hidden bg-gray-200 border border-gray-400 text-gray-800 p-3 rounded-xl text-sm font-bold text-center">
             ⚠️ Você não tem permissão do Administrador para utilizar o sistema de Separação.
         </div>
@@ -132,7 +149,7 @@
     </main>
 
     <!-- CONTEÚDO DA ABA ESTOQUE -->
-    <main id="conteudo-estoque" class="flex-1 overflow-y-auto p-4 hidden flex flex-col gap-4">
+    <main id="conteudo-estoque" class="flex-1 overflow-y-auto p-4 hidden flex-col gap-4">
         <div id="aviso-permissao-estoque" class="hidden bg-gray-200 border border-gray-400 text-gray-800 p-3 rounded-xl text-sm font-bold text-center">
             ⚠️ Você não possui permissões administrativas para gerenciar o estoque.
         </div>
@@ -170,7 +187,7 @@
     </main>
 
     <!-- CONTEÚDO DA ABA SAÍDA -->
-    <main id="conteudo-vendas" class="flex-1 overflow-y-auto p-4 hidden flex flex-col gap-4">
+    <main id="conteudo-vendas" class="flex-1 overflow-y-auto p-4 hidden flex-col gap-4">
         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex-1 flex flex-col">
             <h2 class="text-xs font-bold text-gray-700 uppercase mb-2 tracking-wider">Histórico de Saídas</h2>
             <input type="text" id="busca-vendas" placeholder="Pesquisar por data..." class="w-full border border-gray-300 rounded-lg p-3 text-sm mb-3 outline-none focus:ring-1 focus:ring-black bg-gray-50">
@@ -181,7 +198,7 @@
     </main>
 
     <!-- CONTEÚDO DA ABA ADM -->
-    <main id="conteudo-adm" class="flex-1 overflow-y-auto p-4 hidden flex flex-col gap-4">
+    <main id="conteudo-adm" class="flex-1 overflow-y-auto p-4 hidden flex-col gap-4">
         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex-1 flex flex-col">
             <div class="flex justify-between items-center mb-4 border-b border-gray-200 pb-2">
                 <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Gerenciamento de Usuários</h2>
@@ -196,7 +213,8 @@
     <!-- Script Principal -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, get, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, get, set, update, remove, onValue, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCTkq0uXy5kHg9N8rj9--Dooh8cuguYxPE",
@@ -206,23 +224,16 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-
-        document.getElementById('status-conexao').innerText = "Online";
-
-        let deviceId = localStorage.getItem('subject_device_id');
-        if (!deviceId) {
-            deviceId = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-            localStorage.setItem('subject_device_id', deviceId);
-        }
+        const auth = getAuth(app);
 
         let produtosCache = [];
         let vendasCache = [];
         let carrinho = [];
         let produtoSelecionadoTemp = null;
         let dadosUsuarioAtual = null;
+        let usuarioAuthAtual = null;
         const SENHA_ADM_MESTRE = "admin123";
 
-        // Sistema de Alerta Personalizado Moderno
         window.mostrarAlerta = function(titulo, mensagem, callbackOnOk = null) {
             document.getElementById('modal-pers-titulo').innerText = titulo;
             document.getElementById('modal-pers-mensagem').innerText = mensagem;
@@ -279,94 +290,167 @@
             document.getElementById('btn-modo-visual').innerText = "Modo: PC";
         }
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const activeEl = document.activeElement;
-                if (activeEl && (activeEl.id === 'busca-prod' || activeEl.id === 'qtd-prod')) {
-                    e.preventDefault();
-                    adicionarCarrinho();
-                } else if (activeEl && activeEl.id === 'input-senha-adm') {
-                    e.preventDefault();
-                    validarSenhaAdm();
-                } else if (activeEl && activeEl.id === 'input-nome-inicial') {
-                    e.preventDefault();
-                    registrarNovoUsuario();
+        // Monitor de Autenticação do Firebase Auth
+        onAuthStateChanged(auth, async (user) => {
+            // Esconde a tela de loading inicial em qualquer hipótese após a verificação do Auth
+            document.getElementById('tela-loading').classList.add('hidden');
+
+            if (user) {
+                usuarioAuthAtual = user;
+                const uid = user.uid;
+
+                const userRef = ref(db, `usuarios/${uid}`);
+                const snapshot = await get(userRef);
+
+                if (snapshot.exists()) {
+                    dadosUsuarioAtual = snapshot.val();
+                    
+                    if (dadosUsuarioAtual.banido) {
+                        mostrarTelaBanido();
+                        return;
+                    }
+
+                    await user.reload();
+                    if (!user.emailVerified) {
+                        mostrarTelaVerificacaoPendente();
+                        return;
+                    }
+
+                    liberarInterfaceDoSistema();
+                } else {
+                    const nomeFallback = user.email.split('@')[0];
+                    dadosUsuarioAtual = {
+                        nome: nomeFallback,
+                        email: user.email,
+                        banido: false,
+                        podeEditarEstoque: false,
+                        podeUsarCaixa: false,
+                        podeAcessarAdm: false,
+                        criadoEm: new Date().toLocaleString('pt-BR')
+                    };
+                    await set(userRef, dadosUsuarioAtual);
+                    
+                    if (!user.emailVerified) {
+                        await sendEmailVerification(user);
+                        mostrarTelaVerificacaoPendente();
+                    } else {
+                        liberarInterfaceDoSistema();
+                    }
                 }
+            } else {
+                usuarioAuthAtual = null;
+                dadosUsuarioAtual = null;
+                // Exibe o modal de login quando não estiver autenticado
+                document.getElementById('modal-usuario').classList.remove('hidden');
+                document.getElementById('container-input-auth').classList.remove('hidden');
+                document.getElementById('container-mensagem-banido').classList.add('hidden');
+                document.getElementById('container-verificacao-pendente').classList.add('hidden');
             }
         });
 
-        async function inicializarSistema() {
-            const userRef = ref(db, `usuarios/${deviceId}`);
-            try {
-                const snapshot = await get(userRef);
-                if (snapshot.exists()) {
-                    dadosUsuarioAtual = snapshot.val();
-                    if (dadosUsuarioAtual.banido) {
-                        mostrarTelaBanido();
-                    } else {
-                        document.getElementById('modal-usuario').classList.add('hidden');
-                        document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosUsuarioAtual.nome}`;
-                        aplicarPermissoesUI();
-                    }
-                } else {
-                    document.getElementById('modal-usuario').classList.remove('hidden');
-                }
-
-                onValue(userRef, (snapshotUpdate) => {
-                    if (snapshotUpdate.exists()) {
-                        const dadosAtualizados = snapshotUpdate.val();
-                        dadosUsuarioAtual = dadosAtualizados;
-                        if (dadosAtualizados.banido) {
-                            mostrarTelaBanido();
-                        } else {
-                            const modal = document.getElementById('modal-usuario');
-                            if (!modal.classList.contains('hidden') && document.getElementById('container-mensagem-banido').classList.contains('hidden') == false) {
-                                modal.classList.add('hidden');
-                            }
-                        }
-                        document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosAtualizados.nome}`;
-                        aplicarPermissoesUI();
-                    }
-                });
-            } catch (error) {
-                console.error("Erro ao conectar:", error);
-            }
-        }
-
-        function mostrarTelaBanido() {
-            document.getElementById('modal-titulo').innerText = "Acesso Bloqueado";
-            document.getElementById('modal-subtitulo').innerText = "Dispositivo Banido pelo Administrador.";
-            document.getElementById('container-input-nome').classList.add('hidden');
-            document.getElementById('container-mensagem-banido').classList.remove('hidden');
-            document.getElementById('modal-usuario').classList.remove('hidden');
-        }
-
-        inicializarSistema();
-
-        window.registrarNovoUsuario = async function() {
-            const nome = document.getElementById('input-nome-inicial').value.trim();
-            if (!nome) {
-                mostrarAlerta("Atenção", "Por favor, digite seu nome.");
-                return;
-            }
-
-            dadosUsuarioAtual = {
-                nome: nome,
-                banido: false,
-                podeEditarEstoque: false,
-                podeUsarCaixa: false,
-                podeAcessarAdm: true,
-                criadoEm: new Date().toLocaleString('pt-BR')
-            };
-
-            await set(ref(db, `usuarios/${deviceId}`), dadosUsuarioAtual);
+        function liberarInterfaceDoSistema() {
             document.getElementById('modal-usuario').classList.add('hidden');
+            document.getElementById('app-header').classList.remove('hidden');
+            document.getElementById('conteudo-caixa').classList.remove('hidden');
             document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosUsuarioAtual.nome}`;
             aplicarPermissoesUI();
         }
 
+        window.autenticarUsuario = async function() {
+            const email = document.getElementById('input-email-auth').value.trim();
+            const senha = document.getElementById('input-senha-auth').value.trim();
+            const nomeDigitado = document.getElementById('input-nome-cadastro').value.trim();
+
+            if (!email || !senha) {
+                mostrarAlerta("Atenção", "Preencha o e-mail e a senha.");
+                return;
+            }
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, senha);
+                const user = userCredential.user;
+                
+                await user.reload();
+                if (!user.emailVerified) {
+                    mostrarAlerta("Verificação Pendente", "Seu e-mail ainda não foi verificado. Verifique sua caixa de entrada.");
+                }
+            } catch (error) {
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
+                    try {
+                        if (!nomeDigitado) {
+                            mostrarAlerta("Cadastro", "Como é seu primeiro acesso, por favor informe seu Nome Completo no campo acima.");
+                            return;
+                        }
+
+                        const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
+                        const user = userCredential.user;
+
+                        await sendEmailVerification(user);
+
+                        const novoUsuario = {
+                            nome: nomeDigitado,
+                            email: email,
+                            banido: false,
+                            podeEditarEstoque: false,
+                            podeUsarCaixa: false,
+                            podeAcessarAdm: false,
+                            criadoEm: new Date().toLocaleString('pt-BR')
+                        };
+                        await set(ref(db, `usuarios/${user.uid}`), novoUsuario);
+
+                        mostrarAlerta("Conta Criada", "Conta criada com sucesso! Enviamos um link de verificação para o seu e-mail.");
+                    } catch (createError) {
+                        mostrarAlerta("Erro no Cadastro", createError.message);
+                    }
+                } else {
+                    mostrarAlerta("Erro de Autenticação", error.message);
+                }
+            }
+        }
+
+        window.reenviarVerificacao = async function() {
+            if (usuarioAuthAtual) {
+                try {
+                    await sendEmailVerification(usuarioAuthAtual);
+                    mostrarAlerta("Enviado", "Novo e-mail de verificação enviado! Verifique sua caixa de entrada/spam.");
+                } catch (e) {
+                    mostrarAlerta("Erro", "Aguarde alguns instantes antes de solicitar um novo envio.");
+                }
+            }
+        }
+
+        window.fazerLogoutAuth = async function() {
+            await signOut(auth);
+            window.location.reload();
+        }
+
+        function mostrarTelaBanido() {
+            document.getElementById('modal-titulo').innerText = "Acesso Bloqueado";
+            document.getElementById('modal-subtitulo').innerText = "Sua conta foi banida pelo Administrador.";
+            document.getElementById('container-input-auth').classList.add('hidden');
+            document.getElementById('container-verificacao-pendente').classList.add('hidden');
+            document.getElementById('container-mensagem-banido').classList.remove('hidden');
+            document.getElementById('modal-usuario').classList.remove('hidden');
+        }
+
+        function mostrarTelaVerificacaoPendente() {
+            document.getElementById('modal-titulo').innerText = "Confirme seu E-mail";
+            document.getElementById('modal-subtitulo').innerText = "Sua conta precisa ter o e-mail validado.";
+            document.getElementById('container-input-auth').classList.add('hidden');
+            document.getElementById('container-mensagem-banido').classList.add('hidden');
+            document.getElementById('container-verificacao-pendente').classList.remove('hidden');
+            document.getElementById('modal-usuario').classList.remove('hidden');
+        }
+
         function aplicarPermissoesUI() {
             if (!dadosUsuarioAtual) return;
+
+            const tabAdmEl = document.getElementById('tab-adm');
+            if (dadosUsuarioAtual.podeAcessarAdm === false) {
+                tabAdmEl.classList.add('hidden');
+            } else {
+                tabAdmEl.classList.remove('hidden');
+            }
 
             if (!dadosUsuarioAtual.podeUsarCaixa) {
                 document.getElementById('aviso-permissao-caixa').classList.remove('hidden');
@@ -390,13 +474,19 @@
             ['caixa', 'estoque', 'vendas', 'adm'].forEach(a => {
                 const cont = document.getElementById(`conteudo-${a}`);
                 const tab = document.getElementById(`tab-${a}`);
-                if(cont) cont.classList.add('hidden');
+                if(cont) {
+                    cont.classList.add('hidden');
+                    cont.classList.remove('flex');
+                }
                 if(tab) tab.className = "flex-1 py-3 text-center text-gray-400 hover:text-white";
             });
 
             const alvoCont = document.getElementById(`conteudo-${aba}`);
             const alvoTab = document.getElementById(`tab-${aba}`);
-            if(alvoCont) alvoCont.classList.remove('hidden');
+            if(alvoCont) {
+                alvoCont.classList.remove('hidden');
+                alvoCont.classList.add('flex');
+            }
             if(alvoTab) alvoTab.className = "flex-1 py-3 text-center bg-gray-900 border-b-4 border-white text-white font-bold";
 
             if(aba === 'estoque') carregarEstoqueTela();
@@ -439,8 +529,8 @@
                 const usuarios = snapshot.val();
                 container.innerHTML = '';
 
-                Object.keys(usuarios).forEach(id => {
-                    const u = usuarios[id];
+                Object.keys(usuarios).forEach(uid => {
+                    const u = usuarios[uid];
                     const div = document.createElement('div');
                     div.className = "bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2 flex flex-col gap-2";
                     
@@ -448,23 +538,23 @@
 
                     div.innerHTML = `
                         <div class="flex justify-between items-center font-bold text-gray-800">
-                            <span>👤 ${u.nome}</span>
+                            <span>👤 ${u.nome} (${u.email || 'Sem e-mail'})</span>
                             <span class="${u.banido ? 'text-red-600' : 'text-green-600'}">${u.banido ? 'BANIDO' : 'Ativo'}</span>
                         </div>
-                        <p class="text-[11px] text-gray-500 truncate">ID: ${id}</p>
+                        <p class="text-[11px] text-gray-500 truncate">UID: ${uid}</p>
                         <div class="grid grid-cols-3 gap-2 mt-1">
                             <label class="flex items-center gap-1.5 text-gray-700 cursor-pointer">
-                                <input type="checkbox" ${u.podeEditarEstoque ? 'checked' : ''} onchange="atualizarPermissao('${id}', 'podeEditarEstoque', this.checked)"> Estoque
+                                <input type="checkbox" ${u.podeEditarEstoque ? 'checked' : ''} onchange="atualizarPermissao('${uid}', 'podeEditarEstoque', this.checked)"> Estoque
                             </label>
                             <label class="flex items-center gap-1.5 text-gray-700 cursor-pointer">
-                                <input type="checkbox" ${u.podeUsarCaixa ? 'checked' : ''} onchange="atualizarPermissao('${id}', 'podeUsarCaixa', this.checked)"> Separação
+                                <input type="checkbox" ${u.podeUsarCaixa ? 'checked' : ''} onchange="atualizarPermissao('${uid}', 'podeUsarCaixa', this.checked)"> Separação
                             </label>
                             <label class="flex items-center gap-1.5 text-gray-700 cursor-pointer">
-                                <input type="checkbox" ${podeAdm ? 'checked' : ''} onchange="atualizarPermissao('${id}', 'podeAcessarAdm', this.checked)"> Acesso Adm
+                                <input type="checkbox" ${podeAdm ? 'checked' : ''} onchange="atualizarPermissao('${uid}', 'podeAcessarAdm', this.checked)"> Acesso Adm
                             </label>
                         </div>
                         <div class="flex justify-end mt-2">
-                            <button onclick="confirmarAlternarBanimento('${id}', ${!u.banido}, '${u.nome}')" class="${u.banido ? 'bg-green-600 text-white' : 'bg-red-600 text-white'} px-3 py-1 rounded text-xs font-bold">
+                            <button onclick="confirmarAlternarBanimento('${uid}', ${!u.banido}, '${u.nome}')" class="${u.banido ? 'bg-green-600 text-white' : 'bg-red-600 text-white'} px-3 py-1 rounded text-xs font-bold">
                                 ${u.banido ? 'Desbanir Usuário' : 'Banir Usuário'}
                             </button>
                         </div>

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -14,7 +15,6 @@
             border-right: 1px solid #cbd5e1;
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
-        /* Ajuste de Z-Index para evitar que diálogos fiquem ocultos */
         .modal-overlay-custom {
             position: fixed;
             inset: 0;
@@ -32,10 +32,11 @@
 </head>
 <body class="bg-gray-100 font-sans flex flex-col h-screen justify-between text-base text-gray-900">
 
-    <!-- Indicador de Carregamento Inicial -->
-    <div id="tela-loading" class="fixed inset-0 bg-gray-100 z-50 flex flex-col items-center justify-center p-4">
-        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-black mb-3"></div>
-        <p class="text-sm font-bold text-gray-700">Carregando sistema...</p>
+    <!-- Tela de Carregamento Inicial (Splash / Loading) -->
+    <div id="tela-loading" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-4">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-black mb-4"></div>
+        <h2 class="text-lg font-bold text-gray-900 tracking-wide">Sistema de Separação</h2>
+        <p class="text-xs text-gray-500 mt-1">A verificar credenciais do aparelho...</p>
     </div>
 
     <!-- Modal de Alerta/Confirmação Personalizado -->
@@ -49,30 +50,21 @@
         </div>
     </div>
 
-    <!-- Modal de Autenticação / Login com Google -->
+    <!-- Modal de Identificação / Cadastro do Dispositivo -->
     <div id="modal-usuario" class="modal-overlay-custom hidden">
         <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center border border-gray-300">
-            <h2 id="modal-titulo" class="text-xl font-bold text-gray-900 mb-2">Acesso ao Sistema</h2>
-            <p id="modal-subtitulo" class="text-xs text-gray-600 mb-6">Entre utilizando sua conta Google para acessar o sistema de separação e estoque.</p>
+            <h2 id="modal-titulo" class="text-xl font-bold text-gray-900 mb-2">Identificação do Dispositivo</h2>
+            <p id="modal-subtitulo" class="text-xs text-gray-600 mb-4">Informe seu nome. Como este dispositivo é registrado pelo ID único, seu nome ficará fixo após o cadastro.</p>
             
-            <div id="container-input-auth" class="flex flex-col gap-3">
-                <!-- Botão de Login com Google -->
-                <button onclick="loginComGoogle()" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 py-3.5 px-4 rounded-xl text-sm font-bold shadow-sm hover:bg-gray-50 transition">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                    </svg>
-                    Entrar com o Google
-                </button>
+            <div id="container-input-nome">
+                <input type="text" id="input-nome-inicial" placeholder="Seu nome completo..." class="w-full border border-gray-400 rounded-xl p-3 text-base mb-4 outline-none focus:ring-2 focus:ring-black text-center font-medium bg-gray-50">
+                <button onclick="registrarNovoUsuario()" class="w-full bg-black text-white py-3 rounded-xl text-base font-bold shadow hover:bg-gray-800 transition">Acessar Sistema</button>
             </div>
 
-            <div id="container-mensagem-banido" class="hidden mt-4">
-                <div class="bg-red-50 border border-red-200 p-4 rounded-xl text-red-700 text-sm font-semibold">
-                    🚫 Acesso Negado: Este usuário foi banido pelo Administrador.
+            <div id="container-mensagem-banido" class="hidden">
+                <div class="bg-red-50 border border-red-200 p-4 rounded-xl mb-4 text-red-700 text-sm font-semibold">
+                    🚫 Acesso Negado: Este dispositivo foi banido pelo Administrador.
                 </div>
-                <button onclick="fazerLogoutAuth()" class="w-full bg-gray-200 text-gray-800 py-2 rounded-xl text-xs font-bold mt-3">Sair da Conta</button>
             </div>
         </div>
     </div>
@@ -90,27 +82,27 @@
         </div>
     </div>
 
-    <!-- Cabeçalho / Abas Mobile (Inicia Oculto) -->
+    <!-- Cabeçalho / Abas Mobile (Inicia Oculto até carregar) -->
     <header id="app-header" class="bg-black text-white shadow-md hidden">
         <div class="p-4 flex justify-between items-center">
             <div>
                 <h1 class="font-bold text-lg tracking-wide">Sistema de Separação</h1>
-                <p id="exibir-usuario-logado" class="text-xs text-gray-400">Usuário: Carregando...</p>
+                <p id="exibir-usuario-logado" class="text-xs text-gray-400">Usuário: -</p>
             </div>
             <div class="flex items-center gap-2">
                 <button onclick="alternarModoVisualizacao()" id="btn-modo-visual" class="text-xs bg-gray-800 text-gray-200 px-2.5 py-1.5 rounded font-medium border border-gray-700 hover:bg-gray-700 transition">Modo: Mobile</button>
-                <button onclick="fazerLogoutAuth()" class="text-xs bg-red-900 text-white px-2.5 py-1.5 rounded font-medium border border-red-700 hover:bg-red-800 transition">Sair</button>
+                <span id="status-conexao" class="text-xs bg-gray-800 text-gray-200 px-2.5 py-1.5 rounded font-medium border border-gray-700">Online</span>
             </div>
         </div>
-        <div class="flex border-t border-gray-800 text-xs font-semibold">
-            <button onclick="mudarAba('caixa')" id="tab-caixa" class="flex-1 py-3 text-center bg-gray-900 border-b-4 border-white text-white">Separação</button>
+        <!-- Barra de Abas Dinâmica -->
+        <div id="container-abas-nav" class="flex border-t border-gray-800 text-xs font-semibold">
+            <button onclick="mudarAba('caixa')" id="tab-caixa" class="flex-1 py-3 text-center bg-gray-900 border-b-4 border-white text-white font-bold">Separação</button>
             <button onclick="mudarAba('estoque')" id="tab-estoque" class="flex-1 py-3 text-center text-gray-400 hover:text-white">Estoque</button>
             <button onclick="mudarAba('vendas')" id="tab-vendas" class="flex-1 py-3 text-center text-gray-400 hover:text-white">Saída</button>
-            <button onclick="tentarAbrirAdm()" id="tab-adm" class="flex-1 py-3 text-center text-gray-400 hover:text-white hidden">Adm</button>
         </div>
     </header>
 
-    <!-- CONTEÚDO DA ABA SEPARAÇÃO (Inicia Oculto) -->
+    <!-- CONTEÚDO DA ABA SEPARAÇÃO -->
     <main id="conteudo-caixa" class="flex-1 overflow-y-auto p-4 flex-col gap-4 hidden">
         <div id="aviso-permissao-caixa" class="hidden bg-gray-200 border border-gray-400 text-gray-800 p-3 rounded-xl text-sm font-bold text-center">
             ⚠️ Você não tem permissão do Administrador para utilizar o sistema de Separação.
@@ -225,17 +217,7 @@
     <!-- Script Principal -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, get, set, update, remove, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-        const safetyTimeout = setTimeout(() => {
-            const loadingEl = document.getElementById('tela-loading');
-            if (loadingEl && !loadingEl.classList.contains('hidden')) {
-                loadingEl.classList.add('hidden');
-                document.getElementById('modal-usuario').classList.remove('hidden');
-                console.warn("Aviso de Timeout: O Firebase demorou a responder, exibindo tela de login por segurança.");
-            }
-        }, 4000);
+        import { getDatabase, ref, get, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCTkq0uXy5kHg9N8rj9--Dooh8cuguYxPE",
@@ -245,17 +227,23 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const auth = getAuth(app);
-        const googleProvider = new GoogleAuthProvider();
+
+        document.getElementById('status-conexao').innerText = "Online";
+
+        let deviceId = localStorage.getItem('subject_device_id');
+        if (!deviceId) {
+            deviceId = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('subject_device_id', deviceId);
+        }
 
         let produtosCache = [];
         let vendasCache = [];
         let carrinho = [];
         let produtoSelecionadoTemp = null;
         let dadosUsuarioAtual = null;
-        let usuarioAuthAtual = null;
         const SENHA_ADM_MESTRE = "admin123";
 
+        // Sistema de Alerta Personalizado Moderno
         window.mostrarAlerta = function(titulo, mensagem, callbackOnOk = null) {
             document.getElementById('modal-pers-titulo').innerText = titulo;
             document.getElementById('modal-pers-mensagem').innerText = mensagem;
@@ -312,89 +300,118 @@
             document.getElementById('btn-modo-visual').innerText = "Modo: PC";
         }
 
-        onAuthStateChanged(auth, async (user) => {
-            clearTimeout(safetyTimeout);
-            document.getElementById('tela-loading').classList.add('hidden');
-
-            if (user) {
-                usuarioAuthAtual = user;
-                const uid = user.uid;
-
-                const userRef = ref(db, `usuarios/${uid}`);
-                const snapshot = await get(userRef);
-
-                if (snapshot.exists()) {
-                    dadosUsuarioAtual = snapshot.val();
-                    
-                    if (dadosUsuarioAtual.banido) {
-                        mostrarTelaBanido();
-                        return;
-                    }
-
-                    liberarInterfaceDoSistema();
-                } else {
-                    // Primeiro acesso com Google: Cria o perfil automaticamente no banco
-                    dadosUsuarioAtual = {
-                        nome: user.displayName || user.email.split('@')[0],
-                        email: user.email,
-                        banido: false,
-                        podeEditarEstoque: false,
-                        podeUsarCaixa: false,
-                        podeAcessarAdm: false,
-                        criadoEm: new Date().toLocaleString('pt-BR')
-                    };
-                    await set(userRef, dadosUsuarioAtual);
-                    liberarInterfaceDoSistema();
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const activeEl = document.activeElement;
+                if (activeEl && (activeEl.id === 'busca-prod' || activeEl.id === 'qtd-prod')) {
+                    e.preventDefault();
+                    adicionarCarrinho();
+                } else if (activeEl && activeEl.id === 'input-senha-adm') {
+                    e.preventDefault();
+                    validarSenhaAdm();
+                } else if (activeEl && activeEl.id === 'input-nome-inicial') {
+                    e.preventDefault();
+                    registrarNovoUsuario();
                 }
-            } else {
-                usuarioAuthAtual = null;
-                dadosUsuarioAtual = null;
-                document.getElementById('modal-usuario').classList.remove('hidden');
-                document.getElementById('container-input-auth').classList.remove('hidden');
-                document.getElementById('container-mensagem-banido').classList.add('hidden');
             }
         });
 
-        function liberarInterfaceDoSistema() {
-            document.getElementById('modal-usuario').classList.add('hidden');
-            document.getElementById('app-header').classList.remove('hidden');
-            document.getElementById('conteudo-caixa').classList.remove('hidden');
-            document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosUsuarioAtual.nome}`;
-            aplicarPermissoesUI();
-        }
-
-        // Função de login utilizando o Google Popup
-        window.loginComGoogle = async function() {
+        async function inicializarSistema() {
+            const userRef = ref(db, `usuarios/${deviceId}`);
             try {
-                await signInWithPopup(auth, googleProvider);
-            } catch (error) {
-                console.error("Erro no login com Google:", error);
-                mostrarAlerta("Erro de Autenticação", "Não foi possível concluir o login com o Google. Tente novamente.");
-            }
-        }
+                const snapshot = await get(userRef);
+                
+                // Oculta a tela de loading inicial
+                document.getElementById('tela-loading').classList.add('hidden');
 
-        window.fazerLogoutAuth = async function() {
-            await signOut(auth);
-            window.location.reload();
+                if (snapshot.exists()) {
+                    dadosUsuarioAtual = snapshot.val();
+                    if (dadosUsuarioAtual.banido) {
+                        mostrarTelaBanido();
+                    } else {
+                        document.getElementById('app-header').classList.remove('hidden');
+                        document.getElementById('conteudo-caixa').classList.remove('hidden');
+                        document.getElementById('conteudo-caixa').classList.add('flex');
+                        document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosUsuarioAtual.nome}`;
+                        aplicarPermissoesUI();
+                    }
+                } else {
+                    document.getElementById('modal-usuario').classList.remove('hidden');
+                }
+
+                onValue(userRef, (snapshotUpdate) => {
+                    if (snapshotUpdate.exists()) {
+                        const dadosAtualizados = snapshotUpdate.val();
+                        dadosUsuarioAtual = dadosAtualizados;
+                        if (dadosAtualizados.banido) {
+                            mostrarTelaBanido();
+                        } else {
+                            const modal = document.getElementById('modal-usuario');
+                            if (!modal.classList.contains('hidden') && document.getElementById('container-mensagem-banido').classList.contains('hidden') == false) {
+                                modal.classList.add('hidden');
+                            }
+                        }
+                        document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosAtualizados.nome}`;
+                        aplicarPermissoesUI();
+                    }
+                });
+            } catch (error) {
+                console.error("Erro ao conectar:", error);
+                document.getElementById('tela-loading').classList.add('hidden');
+                mostrarAlerta("Erro", "Falha ao conectar com o banco de dados.");
+            }
         }
 
         function mostrarTelaBanido() {
             document.getElementById('modal-titulo').innerText = "Acesso Bloqueado";
-            document.getElementById('modal-subtitulo').innerText = "Sua conta foi banida pelo Administrador.";
-            document.getElementById('container-input-auth').classList.add('hidden');
+            document.getElementById('modal-subtitulo').innerText = "Dispositivo Banido pelo Administrador.";
+            document.getElementById('container-input-nome').classList.add('hidden');
             document.getElementById('container-mensagem-banido').classList.remove('hidden');
             document.getElementById('modal-usuario').classList.remove('hidden');
+        }
+
+        inicializarSistema();
+
+        window.registrarNovoUsuario = async function() {
+            const nome = document.getElementById('input-nome-inicial').value.trim();
+            if (!nome) {
+                mostrarAlerta("Atenção", "Por favor, digite seu nome.");
+                return;
+            }
+
+            dadosUsuarioAtual = {
+                nome: nome,
+                banido: false,
+                podeEditarEstoque: false,
+                podeUsarCaixa: false,
+                podeAcessarAdm: false,
+                criadoEm: new Date().toLocaleString('pt-BR')
+            };
+
+            await set(ref(db, `usuarios/${deviceId}`), dadosUsuarioAtual);
+            document.getElementById('modal-usuario').classList.add('hidden');
+            document.getElementById('app-header').classList.remove('hidden');
+            document.getElementById('conteudo-caixa').classList.remove('hidden');
+            document.getElementById('conteudo-caixa').classList.add('flex');
+            document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosUsuarioAtual.nome}`;
+            aplicarPermissoesUI();
         }
 
         function aplicarPermissoesUI() {
             if (!dadosUsuarioAtual) return;
 
-            const tabAdmEl = document.getElementById('tab-adm');
-            if (dadosUsuarioAtual.podeAcessarAdm === false) {
-                tabAdmEl.classList.add('hidden');
-            } else {
-                tabAdmEl.classList.remove('hidden');
+            // Controle da aba Adm: só aparece se tiver permissão
+            const containerAbas = document.getElementById('container-abas-nav');
+            let htmlAbas = `
+                <button onclick="mudarAba('caixa')" id="tab-caixa" class="flex-1 py-3 text-center bg-gray-900 border-b-4 border-white text-white font-bold">Separação</button>
+                <button onclick="mudarAba('estoque')" id="tab-estoque" class="flex-1 py-3 text-center text-gray-400 hover:text-white">Estoque</button>
+                <button onclick="mudarAba('vendas')" id="tab-vendas" class="flex-1 py-3 text-center text-gray-400 hover:text-white">Saída</button>
+            `;
+
+            if (dadosUsuarioAtual.podeAcessarAdm === true) {
+                htmlAbas += `<button onclick="tentarAbrirAdm()" id="tab-adm" class="flex-1 py-3 text-center text-gray-400 hover:text-white">Adm</button>`;
             }
+            containerAbas.innerHTML = htmlAbas;
 
             if (!dadosUsuarioAtual.podeUsarCaixa) {
                 document.getElementById('aviso-permissao-caixa').classList.remove('hidden');
@@ -439,8 +456,8 @@
         }
 
         window.tentarAbrirAdm = function() {
-            if (dadosUsuarioAtual && dadosUsuarioAtual.podeAcessarAdm === false) {
-                mostrarAlerta("Acesso Restrito", "O administrador desativou sua permissão de acesso à aba de Administração.");
+            if (dadosUsuarioAtual && dadosUsuarioAtual.podeAcessarAdm !== true) {
+                mostrarAlerta("Acesso Restrito", "Você não tem permissão de acesso à aba de Administração.");
                 return;
             }
             document.getElementById('modal-senha-adm').classList.remove('hidden');
@@ -473,32 +490,32 @@
                 const usuarios = snapshot.val();
                 container.innerHTML = '';
 
-                Object.keys(usuarios).forEach(uid => {
-                    const u = usuarios[uid];
+                Object.keys(usuarios).forEach(id => {
+                    const u = usuarios[id];
                     const div = document.createElement('div');
                     div.className = "bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2 flex flex-col gap-2";
                     
-                    const podeAdm = u.podeAcessarAdm !== false;
+                    const podeAdm = u.podeAcessarAdm === true;
 
                     div.innerHTML = `
                         <div class="flex justify-between items-center font-bold text-gray-800">
-                            <span>👤 ${u.nome} (${u.email || 'Sem e-mail'})</span>
+                            <span>👤 ${u.nome}</span>
                             <span class="${u.banido ? 'text-red-600' : 'text-green-600'}">${u.banido ? 'BANIDO' : 'Ativo'}</span>
                         </div>
-                        <p class="text-[11px] text-gray-500 truncate">UID: ${uid}</p>
+                        <p class="text-[11px] text-gray-500 truncate">ID: ${id}</p>
                         <div class="grid grid-cols-3 gap-2 mt-1">
                             <label class="flex items-center gap-1.5 text-gray-700 cursor-pointer">
-                                <input type="checkbox" ${u.podeEditarEstoque ? 'checked' : ''} onchange="atualizarPermissao('${uid}', 'podeEditarEstoque', this.checked)"> Estoque
+                                <input type="checkbox" ${u.podeEditarEstoque ? 'checked' : ''} onchange="atualizarPermissao('${id}', 'podeEditarEstoque', this.checked)"> Estoque
                             </label>
                             <label class="flex items-center gap-1.5 text-gray-700 cursor-pointer">
-                                <input type="checkbox" ${u.podeUsarCaixa ? 'checked' : ''} onchange="atualizarPermissao('${uid}', 'podeUsarCaixa', this.checked)"> Separação
+                                <input type="checkbox" ${u.podeUsarCaixa ? 'checked' : ''} onchange="atualizarPermissao('${id}', 'podeUsarCaixa', this.checked)"> Separação
                             </label>
                             <label class="flex items-center gap-1.5 text-gray-700 cursor-pointer">
-                                <input type="checkbox" ${podeAdm ? 'checked' : ''} onchange="atualizarPermissao('${uid}', 'podeAcessarAdm', this.checked)"> Acesso Adm
+                                <input type="checkbox" ${podeAdm ? 'checked' : ''} onchange="atualizarPermissao('${id}', 'podeAcessarAdm', this.checked)"> Acesso Adm
                             </label>
                         </div>
                         <div class="flex justify-end mt-2">
-                            <button onclick="confirmarAlternarBanimento('${uid}', ${!u.banido}, '${u.nome}')" class="${u.banido ? 'bg-green-600 text-white' : 'bg-red-600 text-white'} px-3 py-1 rounded text-xs font-bold">
+                            <button onclick="confirmarAlternarBanimento('${id}', ${!u.banido}, '${u.nome}')" class="${u.banido ? 'bg-green-600 text-white' : 'bg-red-600 text-white'} px-3 py-1 rounded text-xs font-bold">
                                 ${u.banido ? 'Desbanir Usuário' : 'Banir Usuário'}
                             </button>
                         </div>
@@ -528,6 +545,13 @@
         window.atualizarPermissao = async function(idUser, campo, valor) {
             try {
                 await update(ref(db, `usuarios/${idUser}`), { [campo]: valor });
+                if (idUser === deviceId) {
+                    dadosUsuarioAtual[campo] = valor;
+                    aplicarPermissoesUI();
+                    if (campo === 'podeAcessarAdm' && !valor) {
+                        mudarAba('caixa');
+                    }
+                }
             } catch (error) {
                 mostrarAlerta("Erro", "Erro ao atualizar permissão.");
             }

@@ -2,15 +2,35 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistema de Separação - Profissional</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body.modo-pc {
+            max-width: 1200px;
+            margin: 0 auto;
+            border-left: 1px solid #cbd5e1;
+            border-right: 1px solid #cbd5e1;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 <body class="bg-gray-100 font-sans flex flex-col h-screen justify-between text-base text-gray-900">
 
+    <!-- Modal de Alerta/Confirmação Personalizado -->
+    <div id="modal-personalizado" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center border border-gray-300">
+            <h2 id="modal-pers-titulo" class="text-xl font-bold text-gray-900 mb-2">Aviso</h2>
+            <p id="modal-pers-mensagem" class="text-sm text-gray-600 mb-6">Mensagem do sistema...</p>
+            <div id="modal-pers-botoes" class="flex gap-2">
+                <button id="modal-pers-btn-ok" onclick="fecharModalPersonalizado()" class="w-full bg-black text-white py-3 rounded-xl text-sm font-bold shadow hover:bg-gray-800 transition">OK</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Identificação / Bloqueio / Banimento -->
-    <div id="modal-usuario" class="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4">
+    <div id="modal-usuario" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center border border-gray-300">
             <h2 id="modal-titulo" class="text-xl font-bold text-gray-900 mb-2">Identificação do Dispositivo</h2>
             <p id="modal-subtitulo" class="text-xs text-gray-600 mb-4">Informe seu nome. Como este dispositivo é registrado pelo ID único, seu nome ficará fixo após o cadastro.</p>
@@ -46,9 +66,12 @@
         <div class="p-4 flex justify-between items-center">
             <div>
                 <h1 class="font-bold text-lg tracking-wide">Sistema de Separação</h1>
-                <p id="exibir-usuario-logado" class="text-xs text-gray-400">Usuário: -</p>
+                <p id="exibir-usuario-logado" class="text-xs text-gray-400">Usuário: Carregando...</p>
             </div>
-            <span id="status-conexao" class="text-xs bg-gray-800 text-gray-200 px-3 py-1.5 rounded font-medium border border-gray-700">Conectando...</span>
+            <div class="flex items-center gap-2">
+                <button onclick="alternarModoVisualizacao()" id="btn-modo-visual" class="text-xs bg-gray-800 text-gray-200 px-2.5 py-1.5 rounded font-medium border border-gray-700 hover:bg-gray-700 transition">Modo: Mobile</button>
+                <span id="status-conexao" class="text-xs bg-gray-800 text-gray-200 px-2.5 py-1.5 rounded font-medium border border-gray-700">Online</span>
+            </div>
         </div>
         <div class="flex border-t border-gray-800 text-xs font-semibold">
             <button onclick="mudarAba('caixa')" id="tab-caixa" class="flex-1 py-3 text-center bg-gray-900 border-b-4 border-white text-white">Separação</button>
@@ -199,41 +222,131 @@
         let dadosUsuarioAtual = null;
         const SENHA_ADM_MESTRE = "admin123";
 
-        function inicializarSistema() {
-            const userRef = ref(db, `usuarios/${deviceId}`);
+        // Sistema de Alerta Personalizado Moderno
+        window.mostrarAlerta = function(titulo, mensagem, callbackOnOk = null) {
+            document.getElementById('modal-pers-titulo').innerText = titulo;
+            document.getElementById('modal-pers-mensagem').innerText = mensagem;
+            const containerBotoes = document.getElementById('modal-pers-botoes');
+            containerBotoes.innerHTML = `<button id="modal-pers-btn-ok" class="w-full bg-black text-white py-3 rounded-xl text-sm font-bold shadow hover:bg-gray-800 transition">OK</button>`;
             
-            // Ouvinte em tempo real para o usuário atual (atualiza banimento e permissões na hora!)
-            onValue(userRef, (snapshot) => {
+            document.getElementById('modal-pers-btn-ok').onclick = () => {
+                document.getElementById('modal-personalizado').classList.add('hidden');
+                if (callbackOnOk) callbackOnOk();
+            };
+            document.getElementById('modal-personalizado').classList.remove('hidden');
+        }
+
+        window.mostrarConfirmacao = function(titulo, mensagem, callbackSim) {
+            document.getElementById('modal-pers-titulo').innerText = titulo;
+            document.getElementById('modal-pers-mensagem').innerText = mensagem;
+            const containerBotoes = document.getElementById('modal-pers-botoes');
+            containerBotoes.innerHTML = `
+                <button id="modal-pers-btn-nao" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-xl text-sm font-bold hover:bg-gray-400 transition">Cancelar</button>
+                <button id="modal-pers-btn-sim" class="flex-1 bg-black text-white py-3 rounded-xl text-sm font-bold shadow hover:bg-gray-800 transition">Confirmar</button>
+            `;
+
+            document.getElementById('modal-pers-btn-nao').onclick = () => {
+                document.getElementById('modal-personalizado').classList.add('hidden');
+            };
+
+            document.getElementById('modal-pers-btn-sim').onclick = () => {
+                document.getElementById('modal-personalizado').classList.add('hidden');
+                callbackSim();
+            };
+            document.getElementById('modal-personalizado').classList.remove('hidden');
+        }
+
+        window.fecharModalPersonalizado = function() {
+            document.getElementById('modal-personalizado').classList.add('hidden');
+        }
+
+        window.alternarModoVisualizacao = function() {
+            const body = document.body;
+            const btn = document.getElementById('btn-modo-visual');
+            if (body.classList.contains('modo-pc')) {
+                body.classList.remove('modo-pc');
+                btn.innerText = "Modo: Mobile";
+                localStorage.setItem('subject_modo_tela', 'mobile');
+            } else {
+                body.classList.add('modo-pc');
+                btn.innerText = "Modo: PC";
+                localStorage.setItem('subject_modo_tela', 'pc');
+            }
+        }
+
+        if (localStorage.getItem('subject_modo_tela') === 'pc') {
+            document.body.classList.add('modo-pc');
+            document.getElementById('btn-modo-visual').innerText = "Modo: PC";
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const activeEl = document.activeElement;
+                if (activeEl && (activeEl.id === 'busca-prod' || activeEl.id === 'qtd-prod')) {
+                    e.preventDefault();
+                    adicionarCarrinho();
+                } else if (activeEl && activeEl.id === 'input-senha-adm') {
+                    e.preventDefault();
+                    validarSenhaAdm();
+                } else if (activeEl && activeEl.id === 'input-nome-inicial') {
+                    e.preventDefault();
+                    registrarNovoUsuario();
+                }
+            }
+        });
+
+        async function inicializarSistema() {
+            const userRef = ref(db, `usuarios/${deviceId}`);
+            try {
+                const snapshot = await get(userRef);
                 if (snapshot.exists()) {
                     dadosUsuarioAtual = snapshot.val();
-                    
                     if (dadosUsuarioAtual.banido) {
-                        document.getElementById('modal-titulo').innerText = "Acesso Bloqueado";
-                        document.getElementById('modal-subtitulo').innerText = "Dispositivo Banido pelo Administrador.";
-                        document.getElementById('container-input-nome').classList.add('hidden');
-                        document.getElementById('container-mensagem-banido').classList.remove('hidden');
-                        document.getElementById('modal-usuario').classList.remove('hidden');
-                        return;
+                        mostrarTelaBanido();
                     } else {
-                        // Se foi desbanido, fecha o modal de banimento
                         document.getElementById('modal-usuario').classList.add('hidden');
-                        document.getElementById('container-input-nome').classList.remove('hidden');
-                        document.getElementById('container-mensagem-banido').classList.add('hidden');
+                        document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosUsuarioAtual.nome}`;
+                        aplicarPermissoesUI();
                     }
-
-                    document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosUsuarioAtual.nome}`;
-                    aplicarPermissoesUI();
                 } else {
                     document.getElementById('modal-usuario').classList.remove('hidden');
                 }
-            });
+
+                onValue(userRef, (snapshotUpdate) => {
+                    if (snapshotUpdate.exists()) {
+                        const dadosAtualizados = snapshotUpdate.val();
+                        dadosUsuarioAtual = dadosAtualizados;
+                        if (dadosAtualizados.banido) {
+                            mostrarTelaBanido();
+                        } else {
+                            const modal = document.getElementById('modal-usuario');
+                            if (!modal.classList.contains('hidden') && document.getElementById('container-mensagem-banido').classList.contains('hidden') == false) {
+                                modal.classList.add('hidden');
+                            }
+                        }
+                        document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosAtualizados.nome}`;
+                        aplicarPermissoesUI();
+                    }
+                });
+            } catch (error) {
+                console.error("Erro ao conectar:", error);
+            }
         }
+
+        function mostrarTelaBanido() {
+            document.getElementById('modal-titulo').innerText = "Acesso Bloqueado";
+            document.getElementById('modal-subtitulo').innerText = "Dispositivo Banido pelo Administrador.";
+            document.getElementById('container-input-nome').classList.add('hidden');
+            document.getElementById('container-mensagem-banido').classList.remove('hidden');
+            document.getElementById('modal-usuario').classList.remove('hidden');
+        }
+
         inicializarSistema();
 
         window.registrarNovoUsuario = async function() {
             const nome = document.getElementById('input-nome-inicial').value.trim();
             if (!nome) {
-                alert("Por favor, digite seu nome.");
+                mostrarAlerta("Atenção", "Por favor, digite seu nome.");
                 return;
             }
 
@@ -242,6 +355,7 @@
                 banido: false,
                 podeEditarEstoque: false,
                 podeUsarCaixa: false,
+                podeAcessarAdm: true,
                 criadoEm: new Date().toLocaleString('pt-BR')
             };
 
@@ -291,6 +405,10 @@
         }
 
         window.tentarAbrirAdm = function() {
+            if (dadosUsuarioAtual && dadosUsuarioAtual.podeAcessarAdm === false) {
+                mostrarAlerta("Acesso Restrito", "O administrador desativou sua permissão de acesso à aba de Administração.");
+                return;
+            }
             document.getElementById('modal-senha-adm').classList.remove('hidden');
             document.getElementById('input-senha-adm').value = '';
         }
@@ -305,7 +423,7 @@
                 fecharModalAdm();
                 mudarAba('adm');
             } else {
-                alert("Senha de Administrador incorreta!");
+                mostrarAlerta("Erro", "Senha de Administrador incorreta!");
             }
         }
 
@@ -326,22 +444,27 @@
                     const div = document.createElement('div');
                     div.className = "bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2 flex flex-col gap-2";
                     
+                    const podeAdm = u.podeAcessarAdm !== false;
+
                     div.innerHTML = `
                         <div class="flex justify-between items-center font-bold text-gray-800">
                             <span>👤 ${u.nome}</span>
                             <span class="${u.banido ? 'text-red-600' : 'text-green-600'}">${u.banido ? 'BANIDO' : 'Ativo'}</span>
                         </div>
                         <p class="text-[11px] text-gray-500 truncate">ID: ${id}</p>
-                        <div class="grid grid-cols-2 gap-2 mt-1">
+                        <div class="grid grid-cols-3 gap-2 mt-1">
                             <label class="flex items-center gap-1.5 text-gray-700 cursor-pointer">
-                                <input type="checkbox" ${u.podeEditarEstoque ? 'checked' : ''} onchange="atualizarPermissao('${id}', 'podeEditarEstoque', this.checked)"> Editar Estoque
+                                <input type="checkbox" ${u.podeEditarEstoque ? 'checked' : ''} onchange="atualizarPermissao('${id}', 'podeEditarEstoque', this.checked)"> Estoque
                             </label>
                             <label class="flex items-center gap-1.5 text-gray-700 cursor-pointer">
-                                <input type="checkbox" ${u.podeUsarCaixa ? 'checked' : ''} onchange="atualizarPermissao('${id}', 'podeUsarCaixa', this.checked)"> Usar Separação
+                                <input type="checkbox" ${u.podeUsarCaixa ? 'checked' : ''} onchange="atualizarPermissao('${id}', 'podeUsarCaixa', this.checked)"> Separação
+                            </label>
+                            <label class="flex items-center gap-1.5 text-gray-700 cursor-pointer">
+                                <input type="checkbox" ${podeAdm ? 'checked' : ''} onchange="atualizarPermissao('${id}', 'podeAcessarAdm', this.checked)"> Acesso Adm
                             </label>
                         </div>
-                        <div class="flex justify-end mt-1">
-                            <button onclick="alternarBanimento('${id}', ${!u.banido})" class="${u.banido ? 'bg-green-600 text-white' : 'bg-red-600 text-white'} px-3 py-1 rounded text-xs font-bold">
+                        <div class="flex justify-end mt-2">
+                            <button onclick="confirmarAlternarBanimento('${id}', ${!u.banido}, '${u.nome}')" class="${u.banido ? 'bg-green-600 text-white' : 'bg-red-600 text-white'} px-3 py-1 rounded text-xs font-bold">
                                 ${u.banido ? 'Desbanir Usuário' : 'Banir Usuário'}
                             </button>
                         </div>
@@ -354,20 +477,25 @@
             }
         }
 
+        window.confirmarAlternarBanimento = function(idUser, statusBan, nomeUsuario) {
+            const acaoTexto = statusBan ? "banir" : "desbanir";
+            const mensagem = `Tem certeza que deseja ${acaoTexto} o usuário "${nomeUsuario}"?`;
+            
+            mostrarConfirmacao("Confirmação de Segurança", mensagem, async () => {
+                try {
+                    await update(ref(db, `usuarios/${idUser}`), { banido: statusBan });
+                    carregarUsuariosAdm();
+                } catch (error) {
+                    mostrarAlerta("Erro", "Não foi possível alterar o status de banimento.");
+                }
+            });
+        }
+
         window.atualizarPermissao = async function(idUser, campo, valor) {
             try {
                 await update(ref(db, `usuarios/${idUser}`), { [campo]: valor });
             } catch (error) {
-                alert("Erro ao atualizar permissão.");
-            }
-        }
-
-        window.alternarBanimento = async function(idUser, statusBan) {
-            try {
-                await update(ref(db, `usuarios/${idUser}`), { banido: statusBan });
-                carregarUsuariosAdm();
-            } catch (error) {
-                alert("Erro ao alterar status de banimento.");
+                mostrarAlerta("Erro", "Erro ao atualizar permissão.");
             }
         }
 
@@ -419,23 +547,23 @@
 
         window.adicionarCarrinho = function() {
             if (!produtoSelecionadoTemp) {
-                alert("Selecione um produto na pesquisa primeiro.");
+                mostrarAlerta("Atenção", "Selecione um produto na pesquisa primeiro.");
                 return;
             }
             const qtdDesejada = parseInt(document.getElementById('qtd-prod').value);
             if (isNaN(qtdDesejada) || qtdDesejada <= 0) {
-                alert("Informe uma quantidade válida.");
+                mostrarAlerta("Atenção", "Informe uma quantidade válida.");
                 return;
             }
             if (qtdDesejada > produtoSelecionadoTemp.estoque) {
-                alert(`Estoque insuficiente! Disponível: ${produtoSelecionadoTemp.estoque}`);
+                mostrarAlerta("Estoque Insuficiente", `Disponível: ${produtoSelecionadoTemp.estoque}`);
                 return;
             }
 
             const itemExistente = carrinho.find(i => i.id === produtoSelecionadoTemp.id);
             if (itemExistente) {
                 if ((itemExistente.qtd + qtdDesejada) > produtoSelecionadoTemp.estoque) {
-                    alert("A quantidade total excede o estoque disponível.");
+                    mostrarAlerta("Atenção", "A quantidade total excede o estoque disponível.");
                     return;
                 }
                 itemExistente.qtd += qtdDesejada;
@@ -495,53 +623,53 @@
             atualizarCarrinhoUI();
         }
 
-        window.confirmarVenda = async function() {
+        window.confirmarVenda = function() {
             if (carrinho.length === 0) {
-                alert("O carrinho está vazio.");
+                mostrarAlerta("Atenção", "O carrinho está vazio.");
                 return;
             }
 
             let valorTotalVenda = carrinho.reduce((acc, item) => acc + (item.preco * item.qtd), 0);
-            const confirmar = confirm(`Deseja confirmar a separação feita por ${dadosUsuarioAtual.nome} no valor total de R$ ${valorTotalVenda.toFixed(2)}?`);
-            if (!confirmar) return;
+            
+            mostrarConfirmacao("Confirmar Separação", `Deseja confirmar a separação feita por ${dadosUsuarioAtual.nome} no valor total de R$ ${valorTotalVenda.toFixed(2)}?`, async () => {
+                const dataHora = new Date().toLocaleString('pt-BR');
 
-            const dataHora = new Date().toLocaleString('pt-BR');
-
-            try {
-                const updates = {};
-                for (const item of carrinho) {
-                    const produtoOriginal = produtosCache.find(p => p.id === item.id);
-                    const novoEstoque = produtoOriginal.estoque - item.qtd;
-                    if (novoEstoque < 0) {
-                        alert(`Estoque insuficiente para ${item.nome}`);
-                        return;
+                try {
+                    const updates = {};
+                    for (const item of carrinho) {
+                        const produtoOriginal = produtosCache.find(p => p.id === item.id);
+                        const novoEstoque = produtoOriginal.estoque - item.qtd;
+                        if (novoEstoque < 0) {
+                            mostrarAlerta("Erro", `Estoque insuficiente para ${item.nome}`);
+                            return;
+                        }
+                        updates[`produtos/${item.id}/estoque`] = novoEstoque;
                     }
-                    updates[`produtos/${item.id}/estoque`] = novoEstoque;
+
+                    const novaVendaRef = push(ref(db, 'vendas'));
+                    updates[`vendas/${novaVendaRef.key}`] = {
+                        dataHora: dataHora,
+                        separador: dadosUsuarioAtual.nome,
+                        total: valorTotalVenda,
+                        itens: carrinho.map(i => ({ nome: i.nome, qtd: i.qtd, precoUnitario: i.preco }))
+                    };
+
+                    await update(ref(db), updates);
+                    mostrarAlerta("Sucesso", "Separação confirmada e estoque atualizado com sucesso!");
+                    carrinho = [];
+                    atualizarCarrinhoUI();
+                    await carregarProdutos();
+                    carregarEstoqueTela();
+                } catch (error) {
+                    console.error("Erro ao processar:", error);
+                    mostrarAlerta("Erro", "Erro ao conectar com o banco de dados.");
                 }
-
-                const novaVendaRef = push(ref(db, 'vendas'));
-                updates[`vendas/${novaVendaRef.key}`] = {
-                    dataHora: dataHora,
-                    separador: dadosUsuarioAtual.nome,
-                    total: valorTotalVenda,
-                    itens: carrinho.map(i => ({ nome: i.nome, qtd: i.qtd, precoUnitario: i.preco }))
-                };
-
-                await update(ref(db), updates);
-                alert(`Separação confirmada e estoque atualizado com sucesso!`);
-                carrinho = [];
-                atualizarCarrinhoUI();
-                await carregarProdutos();
-                carregarEstoqueTela();
-            } catch (error) {
-                console.error("Erro ao processar:", error);
-                alert("Erro ao conectar com o banco de dados.");
-            }
+            });
         }
 
         window.salvarProduto = async function() {
             if (!dadosUsuarioAtual || !dadosUsuarioAtual.podeEditarEstoque) {
-                alert("Você não tem permissão para editar o estoque.");
+                mostrarAlerta("Acesso Negado", "Você não tem permissão para editar o estoque.");
                 return;
             }
 
@@ -551,25 +679,25 @@
             const estoque = parseInt(document.getElementById('novo-estoque').value);
 
             if (!nome || isNaN(preco) || isNaN(estoque)) {
-                alert("Preencha todos os campos.");
+                mostrarAlerta("Atenção", "Preencha todos os campos.");
                 return;
             }
 
             try {
                 if (idEdit) {
                     await update(ref(db, `produtos/${idEdit}`), { nome, preco, estoque });
-                    alert("Produto atualizado com sucesso!");
+                    mostrarAlerta("Sucesso", "Produto atualizado com sucesso!");
                     cancelarEdicao();
                 } else {
                     await push(ref(db, 'produtos'), { nome, preco, estoque });
-                    alert("Produto cadastrado com sucesso!");
+                    mostrarAlerta("Sucesso", "Produto cadastrado com sucesso!");
                     document.getElementById('novo-nome').value = '';
                     document.getElementById('novo-preco').value = '';
                     document.getElementById('novo-estoque').value = '';
                 }
                 await carregarEstoqueTela();
             } catch (error) {
-                alert("Erro ao salvar no Firebase.");
+                mostrarAlerta("Erro", "Erro ao salvar no Firebase.");
             }
         }
 
@@ -593,21 +721,21 @@
             document.getElementById('btn-cancelar-edit').classList.add('hidden');
         }
 
-        window.excluirProduto = async function(id, nome) {
+        window.excluirProduto = function(id, nome) {
             if (!dadosUsuarioAtual || !dadosUsuarioAtual.podeEditarEstoque) {
-                alert("Apenas administradores com permissão podem excluir itens.");
+                mostrarAlerta("Acesso Negado", "Apenas usuários com permissão podem excluir itens.");
                 return;
             }
-            const confirmar = confirm(`Tem certeza que deseja EXCLUIR permanentemente o produto "${nome}"?`);
-            if (!confirmar) return;
 
-            try {
-                await remove(ref(db, `produtos/${id}`));
-                alert("Produto excluído!");
-                await carregarEstoqueTela();
-            } catch (error) {
-                alert("Erro ao excluir.");
-            }
+            mostrarConfirmacao("Excluir Produto", `Tem certeza que deseja EXCLUIR permanentemente o produto "${nome}"?`, async () => {
+                try {
+                    await remove(ref(db, `produtos/${id}`));
+                    mostrarAlerta("Sucesso", "Produto excluído!");
+                    await carregarEstoqueTela();
+                } catch (error) {
+                    mostrarAlerta("Erro", "Erro ao excluir.");
+                }
+            });
         }
 
         async function carregarEstoqueTela(filtro = '') {

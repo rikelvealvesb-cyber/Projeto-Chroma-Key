@@ -18,7 +18,7 @@
             <div id="container-input-nome">
                 <input type="text" id="input-nome-inicial" placeholder="Seu nome completo..." class="w-full border border-gray-400 rounded-xl p-3 text-base mb-4 outline-none focus:ring-2 focus:ring-black text-center font-medium bg-gray-50">
                 <button onclick="registrarNovoUsuario()" class="w-full bg-black text-white py-3 rounded-xl text-base font-bold shadow hover:bg-gray-800 transition">Acessar Sistema</button>
-            </div>                
+            </div>
 
             <div id="container-mensagem-banido" class="hidden">
                 <div class="bg-red-50 border border-red-200 p-4 rounded-xl mb-4 text-red-700 text-sm font-semibold">
@@ -41,7 +41,7 @@
         </div>
     </div>
 
-    <!-- Cabeçalho / Abas Mobile (Preto e Branco) -->
+    <!-- Cabeçalho / Abas Mobile -->
     <header class="bg-black text-white shadow-md">
         <div class="p-4 flex justify-between items-center">
             <div>
@@ -116,7 +116,7 @@
         
         <div id="painel-conteudo-estoque" class="flex flex-col gap-4 flex-1">
             <div id="alerta-estoque-zero" class="hidden bg-red-50 border-l-4 border-red-600 text-red-900 p-3 text-sm rounded-lg shadow-sm">
-              <p class="font-bold text-base">⚠️ Alerta de Estoque:</p>
+                <p class="font-bold text-base">⚠️ Alerta de Estoque:</p>
                 <p id="texto-alerta-zero">Há produtos esgotados no estoque!</p>
             </div>
 
@@ -173,7 +173,7 @@
     <!-- Script Principal -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, get, set, push, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, get, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCTkq0uXy5kHg9N8rj9--Dooh8cuguYxPE",
@@ -186,7 +186,6 @@
 
         document.getElementById('status-conexao').innerText = "Online";
 
-        // Gerenciamento de ID do Dispositivo (Browser fingerprint / UUID simples persistente)
         let deviceId = localStorage.getItem('subject_device_id');
         if (!deviceId) {
             deviceId = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -198,13 +197,13 @@
         let carrinho = [];
         let produtoSelecionadoTemp = null;
         let dadosUsuarioAtual = null;
-        const SENHA_ADM_MESTRE = "admin123"; // Defina sua senha de adm aqui
+        const SENHA_ADM_MESTRE = "admin123";
 
-        async function inicializarSistema() {
-            try {
-                const userRef = ref(db, `usuarios/${deviceId}`);
-                const snapshot = await get(userRef);
-
+        function inicializarSistema() {
+            const userRef = ref(db, `usuarios/${deviceId}`);
+            
+            // Ouvinte em tempo real para o usuário atual (atualiza banimento e permissões na hora!)
+            onValue(userRef, (snapshot) => {
                 if (snapshot.exists()) {
                     dadosUsuarioAtual = snapshot.val();
                     
@@ -215,46 +214,46 @@
                         document.getElementById('container-mensagem-banido').classList.remove('hidden');
                         document.getElementById('modal-usuario').classList.remove('hidden');
                         return;
+                    } else {
+                        // Se foi desbanido, fecha o modal de banimento
+                        document.getElementById('modal-usuario').classList.add('hidden');
+                        document.getElementById('container-input-nome').classList.remove('hidden');
+                        document.getElementById('container-mensagem-banido').classList.add('hidden');
                     }
 
-                    document.getElementById('modal-usuario').classList.add('hidden');
                     document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosUsuarioAtual.nome}`;
                     aplicarPermissoesUI();
                 } else {
-                    // Usuário novo neste dispositivo
                     document.getElementById('modal-usuario').classList.remove('hidden');
                 }
-            } catch (error) {
-                console.error("Erro ao inicializar:", error);
-            }
+            });
         }
         inicializarSistema();
 
         window.registrarNovoUsuario = async function() {
-    const nome = document.getElementById('input-nome-inicial').value.trim();
-    if (!nome) {
-        alert("Por favor, digite seu nome.");
-        return;
-    }
+            const nome = document.getElementById('input-nome-inicial').value.trim();
+            if (!nome) {
+                alert("Por favor, digite seu nome.");
+                return;
+            }
 
-    dadosUsuarioAtual = {
-        nome: nome,
-        banido: false,
-        podeEditarEstoque: false,
-        podeUsarCaixa: false, // <-- Alterado para false (sem permissão inicial)
-        criadoEm: new Date().toLocaleString('pt-BR')
-    };
+            dadosUsuarioAtual = {
+                nome: nome,
+                banido: false,
+                podeEditarEstoque: false,
+                podeUsarCaixa: false,
+                criadoEm: new Date().toLocaleString('pt-BR')
+            };
 
-    await set(ref(db, `usuarios/${deviceId}`), dadosUsuarioAtual);
-    document.getElementById('modal-usuario').classList.add('hidden');
-    document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosUsuarioAtual.nome}`;
-    aplicarPermissoesUI();
-}
+            await set(ref(db, `usuarios/${deviceId}`), dadosUsuarioAtual);
+            document.getElementById('modal-usuario').classList.add('hidden');
+            document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosUsuarioAtual.nome}`;
+            aplicarPermissoesUI();
+        }
 
         function aplicarPermissoesUI() {
             if (!dadosUsuarioAtual) return;
 
-            // Caixa / Separação
             if (!dadosUsuarioAtual.podeUsarCaixa) {
                 document.getElementById('aviso-permissao-caixa').classList.remove('hidden');
                 document.getElementById('painel-conteudo-caixa').classList.add('hidden');
@@ -263,7 +262,6 @@
                 document.getElementById('painel-conteudo-caixa').classList.remove('hidden');
             }
 
-            // Estoque (Gerenciamento)
             if (!dadosUsuarioAtual.podeEditarEstoque) {
                 document.getElementById('aviso-permissao-estoque').classList.remove('hidden');
                 document.getElementById('bloco-cadastro-produto').classList.add('hidden');
@@ -271,9 +269,9 @@
                 document.getElementById('aviso-permissao-estoque').classList.add('hidden');
                 document.getElementById('bloco-cadastro-produto').classList.remove('hidden');
             }
+            carregarEstoqueTela();
         }
 
-        // Sistema de Abas
         window.mudarAba = function(aba) {
             ['caixa', 'estoque', 'vendas', 'adm'].forEach(a => {
                 const cont = document.getElementById(`conteudo-${a}`);
@@ -311,7 +309,6 @@
             }
         }
 
-        // Funções do Painel Administrativo
         window.carregarUsuariosAdm = async function() {
             const container = document.getElementById('lista-usuarios-adm');
             try {
@@ -374,7 +371,6 @@
             }
         }
 
-        // Restante das operações (Produtos, Carrinho, Vendas)
         async function carregarProdutos() {
             try {
                 const snapshot = await get(ref(db, 'produtos'));
@@ -536,6 +532,7 @@
                 carrinho = [];
                 atualizarCarrinhoUI();
                 await carregarProdutos();
+                carregarEstoqueTela();
             } catch (error) {
                 console.error("Erro ao processar:", error);
                 alert("Erro ao conectar com o banco de dados.");
@@ -638,8 +635,8 @@
             
             filtrados.forEach(p => {
                 const div = document.createElement('div');
-               div.className = `py-3 px-3 rounded-lg flex justify-between items-center border-b border-gray-100 ${p.estoque === 0 ? 'bg-red-50 border-red-200' : ''}`;
-
+                div.className = `py-3 px-3 rounded-lg flex justify-between items-center border-b border-gray-100 ${p.estoque === 0 ? 'bg-red-50 border-red-200' : ''}`;
+                
                 let botoesAcao = '';
                 if (dadosUsuarioAtual && dadosUsuarioAtual.podeEditarEstoque) {
                     botoesAcao = `

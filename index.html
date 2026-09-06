@@ -1,896 +1,139 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema de Separação - Profissional</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel da Loja - Gerenciamento</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body.modo-pc {
-            max-width: 1200px;
-            margin: 0 auto;
-            border-left: 1px solid #cbd5e1;
-            border-right: 1px solid #cbd5e1;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .modal-overlay-custom {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-        #modal-personalizado {
-            z-index: 2000;
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
         }
     </style>
 </head>
-<body class="bg-gray-100 font-sans flex flex-col h-screen justify-between text-base text-gray-900">
+<body class="bg-gray-100 text-gray-800 font-sans pb-24">
 
-    <!-- Tela de Carregamento Inicial (Splash / Loading) -->
-    <div id="tela-loading" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-4">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-black mb-4"></div>
-        <h2 class="text-lg font-bold text-gray-900 tracking-wide">Sistema de Separação</h2>
-        <p class="text-xs text-gray-500 mt-1">A verificar credenciais do aparelho...</p>
-    </div>
-
-    <!-- Modal de Alerta/Confirmação Personalizado -->
-    <div id="modal-personalizado" class="modal-overlay-custom hidden">
-        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center border border-gray-300">
-            <h2 id="modal-pers-titulo" class="text-xl font-bold text-gray-900 mb-2">Aviso</h2>
-            <p id="modal-pers-mensagem" class="text-sm text-gray-600 mb-6">Mensagem do sistema...</p>
-            <div id="modal-pers-botoes" class="flex gap-2">
-                <button id="modal-pers-btn-ok" onclick="fecharModalPersonalizado()" class="w-full bg-black text-white py-3 rounded-xl text-sm font-bold shadow hover:bg-gray-800 transition">OK</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Identificação / Cadastro do Dispositivo -->
-    <div id="modal-usuario" class="modal-overlay-custom hidden">
-        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center border border-gray-300">
-            <h2 id="modal-titulo" class="text-xl font-bold text-gray-900 mb-2">Identificação do Dispositivo</h2>
-            <p id="modal-subtitulo" class="text-xs text-gray-600 mb-4">Informe seu nome. Como este dispositivo é registrado pelo ID único, seu nome ficará fixo após o cadastro.</p>
-            
-            <div id="container-input-nome">
-                <input type="text" id="input-nome-inicial" placeholder="Seu nome completo..." class="w-full border border-gray-400 rounded-xl p-3 text-base mb-4 outline-none focus:ring-2 focus:ring-black text-center font-medium bg-gray-50">
-                <button onclick="registrarNovoUsuario()" class="w-full bg-black text-white py-3 rounded-xl text-base font-bold shadow hover:bg-gray-800 transition">Acessar Sistema</button>
-            </div>
-
-            <div id="container-mensagem-banido" class="hidden">
-                <div class="bg-red-50 border border-red-200 p-4 rounded-xl mb-4 text-red-700 text-sm font-semibold">
-                    🚫 Acesso Negado: Este dispositivo foi banido pelo Administrador.
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Senha do Administrador -->
-    <div id="modal-senha-adm" class="modal-overlay-custom hidden">
-        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center border border-gray-300">
-            <h2 class="text-xl font-bold text-gray-900 mb-2">Painel Administrativo</h2>
-            <p class="text-xs text-gray-600 mb-4">Digite a senha de administrador para acessar esta aba.</p>
-            <input type="password" id="input-senha-adm" placeholder="Senha de Acesso..." class="w-full border border-gray-400 rounded-xl p-3 text-base mb-4 outline-none focus:ring-2 focus:ring-black text-center font-medium bg-gray-50">
-            <div class="flex gap-2">
-                <button onclick="fecharModalAdm()" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-xl text-sm font-bold">Cancelar</button>
-                <button onclick="validarSenhaAdm()" class="flex-1 bg-black text-white py-3 rounded-xl text-sm font-bold">Entrar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cabeçalho / Abas Mobile (Inicia Oculto até carregar) -->
-    <header id="app-header" class="bg-black text-white shadow-md hidden">
-        <div class="p-4 flex justify-between items-center">
-            <div>
-                <h1 class="font-bold text-lg tracking-wide">Sistema de Separação</h1>
-                <p id="exibir-usuario-logado" class="text-xs text-gray-400">Usuário: -</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <button onclick="alternarModoVisualizacao()" id="btn-modo-visual" class="text-xs bg-gray-800 text-gray-200 px-2.5 py-1.5 rounded font-medium border border-gray-700 hover:bg-gray-700 transition">Modo: Mobile</button>
-                <span id="status-conexao" class="text-xs bg-gray-800 text-gray-200 px-2.5 py-1.5 rounded font-medium border border-gray-700">Online</span>
-            </div>
-        </div>
-        <!-- Barra de Abas Dinâmica -->
-        <div id="container-abas-nav" class="flex border-t border-gray-800 text-xs font-semibold">
-            <button onclick="mudarAba('caixa')" id="tab-caixa" class="flex-1 py-3 text-center bg-gray-900 border-b-4 border-white text-white font-bold">Separação</button>
-            <button onclick="mudarAba('estoque')" id="tab-estoque" class="flex-1 py-3 text-center text-gray-400 hover:text-white">Estoque</button>
-            <button onclick="mudarAba('vendas')" id="tab-vendas" class="flex-1 py-3 text-center text-gray-400 hover:text-white">Saída</button>
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-orange-600 flex items-center gap-2">
+                <i data-lucide="store" class="w-6 h-6"></i> Painel da Loja
+            </h1>
+            <span class="text-xs bg-orange-100 text-orange-700 font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                <i data-lucide="radio" class="w-3.5 h-3.5 animate-pulse"></i> Ao vivo
+            </span>
         </div>
     </header>
 
-    <!-- CONTEÚDO DA ABA SEPARAÇÃO -->
-    <main id="conteudo-caixa" class="flex-1 overflow-y-auto p-4 flex-col gap-4 hidden">
-        <div id="aviso-permissao-caixa" class="hidden bg-gray-200 border border-gray-400 text-gray-800 p-3 rounded-xl text-sm font-bold text-center">
-            ⚠️ Você não tem permissão do Administrador para utilizar o sistema de Separação.
-        </div>
-        <div id="painel-conteudo-caixa" class="flex flex-col gap-4 flex-1">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Pesquisar Produto</label>
-                <input type="text" id="busca-prod" placeholder="Nome do produto..." class="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-2 focus:ring-black outline-none mb-3">
-                
-                <div id="lista-busca" class="max-h-40 overflow-y-auto divide-y divide-gray-100 mb-3"></div>
-
-                <div id="painel-selecionado" class="hidden bg-gray-50 border border-gray-300 p-3 rounded-lg mb-3 text-sm">
-                    <span class="text-gray-600">Selecionado:</span> <strong id="nome-prod-selecionado" class="text-black"></strong>
-                </div>
-
-                <div class="grid grid-cols-3 gap-3 items-end">
-                    <div class="col-span-1">
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Qtd</label>
-                        <input type="number" id="qtd-prod" value="1" min="1" class="w-full border border-gray-300 rounded-lg p-3 text-base text-center font-bold bg-gray-50">
-                    </div>
-                    <div class="col-span-2">
-                        <button onclick="adicionarCarrinho()" class="w-full bg-black text-white py-3 rounded-lg text-base font-bold hover:bg-gray-800 shadow">Adicionar</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex-1 flex flex-col justify-between">
-                <div>
-                    <h2 class="text-xs font-bold text-gray-600 uppercase mb-3 tracking-wider">Itens Separados</h2>
-                    <div id="itens-carrinho" class="max-h-36 overflow-y-auto divide-y divide-gray-100 text-base">
-                        <p class="text-gray-400 text-center py-4 text-sm">Nenhum item adicionado</p>
-                    </div>
-                </div>
-
-                <div class="border-t border-gray-200 pt-3 mt-3">
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="font-bold text-gray-700 text-base">Total Geral:</span>
-                        <span id="total-carrinho" class="text-xl font-bold text-black">R$ 0,00</span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="limparCarrinho()" class="bg-gray-200 text-gray-800 py-3 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-300">Limpar</button>
-                        <button onclick="confirmarVenda()" class="bg-black text-white py-3 rounded-lg text-sm font-bold shadow hover:bg-gray-800">Confirmar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- CONTEÚDO DA ABA ESTOQUE -->
-    <main id="conteudo-estoque" class="flex-1 overflow-y-auto p-4 hidden flex-col gap-4">
-        <div id="aviso-permissao-estoque" class="hidden bg-gray-200 border border-gray-400 text-gray-800 p-3 rounded-xl text-sm font-bold text-center">
-            ⚠️ Você não possui permissões administrativas para gerenciar o estoque.
-        </div>
+    <!-- Conteúdo Principal -->
+    <main class="max-w-4xl mx-auto p-4 animate-fade-in">
+        <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <i data-lucide="clipboard-list" class="w-5 h-5 text-orange-600"></i> Pedidos Recebidos
+        </h2>
         
-        <div id="painel-conteudo-estoque" class="flex flex-col gap-4 flex-1">
-            <div id="alerta-estoque-zero" class="hidden bg-red-50 border-l-4 border-red-600 text-red-900 p-3 text-sm rounded-lg shadow-sm">
-                <p class="font-bold text-base">⚠️ Alerta de Estoque:</p>
-                <p id="texto-alerta-zero">Há produtos esgotados no estoque!</p>
-            </div>
-
-            <div id="bloco-cadastro-produto" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                <h2 id="titulo-form-produto" class="text-xs font-bold text-gray-700 uppercase mb-3 tracking-wider">Cadastrar Produto</h2>
-                <input type="hidden" id="edit-id-prod" value="">
-                <div class="flex flex-col gap-3">
-                    <input type="text" id="novo-nome" placeholder="Nome do Produto" class="border border-gray-300 rounded-lg p-3 text-base bg-gray-50">
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="number" id="novo-preco" placeholder="Preço (R$)" step="0.01" class="border border-gray-300 rounded-lg p-3 text-base bg-gray-50">
-                        <input type="number" id="novo-estoque" placeholder="Estoque" class="border border-gray-300 rounded-lg p-3 text-base bg-gray-50">
-                    </div>
-                    <div class="flex gap-3">
-                        <button onclick="salvarProduto()" id="btn-salvar-prod" class="flex-1 bg-black text-white py-3 rounded-lg text-sm font-bold shadow hover:bg-gray-800">Salvar no Firebase</button>
-                        <button onclick="cancelarEdicao()" id="btn-cancelar-edit" class="hidden bg-gray-400 text-white py-3 px-4 rounded-lg text-sm font-bold">Cancelar</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex-1 flex flex-col">
-                <h2 class="text-xs font-bold text-gray-700 uppercase mb-2 tracking-wider">Estoque Online</h2>
-                <input type="text" id="busca-estoque" placeholder="Pesquisar produto no estoque..." class="w-full border border-gray-300 rounded-lg p-3 text-sm mb-3 outline-none focus:ring-1 focus:ring-black bg-gray-50">
-                <div id="lista-estoque" class="divide-y divide-gray-100 overflow-y-auto flex-1 text-sm">
-                    <p class="text-gray-400 text-center py-4">Carregando...</p>
-                </div>
-            </div>
+        <div id="lista-pedidos-loja" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Pedidos injetados em tempo real via JS -->
         </div>
     </main>
 
-    <!-- CONTEÚDO DA ABA SAÍDA -->
-    <main id="conteudo-vendas" class="flex-1 overflow-y-auto p-4 hidden flex-col gap-4">
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex-1 flex flex-col">
-            <h2 class="text-xs font-bold text-gray-700 uppercase mb-2 tracking-wider">Histórico de Saídas</h2>
-            <input type="text" id="busca-vendas" placeholder="Pesquisar por data..." class="w-full border border-gray-300 rounded-lg p-3 text-sm mb-3 outline-none focus:ring-1 focus:ring-black bg-gray-50">
-            <div id="lista-vendas" class="divide-y divide-gray-200 overflow-y-auto flex-1 text-sm space-y-3">
-                <p class="text-gray-400 text-center py-6">Carregando saídas...</p>
-            </div>
-        </div>
-    </main>
-
-    <!-- CONTEÚDO DA ABA ADM -->
-    <main id="conteudo-adm" class="flex-1 overflow-y-auto p-4 hidden flex-col gap-4">
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex-1 flex flex-col">
-            <div class="flex justify-between items-center mb-4 border-b border-gray-200 pb-2">
-                <h2 class="text-sm font-bold text-gray-800 uppercase tracking-wider">Gerenciamento de Usuários</h2>
-                <button onclick="carregarUsuariosAdm()" class="bg-gray-200 text-gray-800 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300">Atualizar Lista</button>
-            </div>
-            <div id="lista-usuarios-adm" class="divide-y divide-gray-200 overflow-y-auto flex-1 text-xs space-y-3">
-                <p class="text-gray-400 text-center py-6">Carregando usuários...</p>
-            </div>
-        </div>
-    </main>
-
-    <!-- Script Principal -->
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, get, set, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyCTkq0uXy5kHg9N8rj9--Dooh8cuguYxPE",
-            databaseURL: "https://subjectrobot-49600-default-rtdb.firebaseio.com",
-            projectId: "subjectrobot-49600"
+            databaseURL: "https://subjectrobot-49600-default-rtdb.firebaseio.com/",
+            apiKey: "AlzaSyCTkqOuXy5kHg9N8r9--Dooh8cuguYxPE",
+            storageBucket: "subjectrobot-49600.appspot.com",
+            appId: "1:731604558049:android:7f47b30b289445814017a0"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        document.getElementById('status-conexao').innerText = "Online";
+        function carregarPedidosLoja() {
+            const container = document.getElementById('lista-pedidos-loja');
 
-        let deviceId = localStorage.getItem('subject_device_id');
-        if (!deviceId) {
-            deviceId = 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-            localStorage.setItem('subject_device_id', deviceId);
-        }
-
-        let produtosCache = [];
-        let vendasCache = [];
-        let carrinho = [];
-        let produtoSelecionadoTemp = null;
-        let dadosUsuarioAtual = null;
-        const SENHA_ADM_MESTRE = "admin123";
-
-        // Sistema de Alerta Personalizado Moderno
-        window.mostrarAlerta = function(titulo, mensagem, callbackOnOk = null) {
-            document.getElementById('modal-pers-titulo').innerText = titulo;
-            document.getElementById('modal-pers-mensagem').innerText = mensagem;
-            const containerBotoes = document.getElementById('modal-pers-botoes');
-            containerBotoes.innerHTML = `<button id="modal-pers-btn-ok" class="w-full bg-black text-white py-3 rounded-xl text-sm font-bold shadow hover:bg-gray-800 transition">OK</button>`;
-            
-            document.getElementById('modal-pers-btn-ok').onclick = () => {
-                document.getElementById('modal-personalizado').classList.add('hidden');
-                if (callbackOnOk) callbackOnOk();
-            };
-            document.getElementById('modal-personalizado').classList.remove('hidden');
-        }
-
-        window.mostrarConfirmacao = function(titulo, mensagem, callbackSim) {
-            document.getElementById('modal-pers-titulo').innerText = titulo;
-            document.getElementById('modal-pers-mensagem').innerText = mensagem;
-            const containerBotoes = document.getElementById('modal-pers-botoes');
-            containerBotoes.innerHTML = `
-                <button id="modal-pers-btn-nao" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-xl text-sm font-bold hover:bg-gray-400 transition">Cancelar</button>
-                <button id="modal-pers-btn-sim" class="flex-1 bg-black text-white py-3 rounded-xl text-sm font-bold shadow hover:bg-gray-800 transition">Confirmar</button>
-            `;
-
-            document.getElementById('modal-pers-btn-nao').onclick = () => {
-                document.getElementById('modal-personalizado').classList.add('hidden');
-            };
-
-            document.getElementById('modal-pers-btn-sim').onclick = () => {
-                document.getElementById('modal-personalizado').classList.add('hidden');
-                callbackSim();
-            };
-            document.getElementById('modal-personalizado').classList.remove('hidden');
-        }
-
-        window.fecharModalPersonalizado = function() {
-            document.getElementById('modal-personalizado').classList.add('hidden');
-        }
-
-        window.alternarModoVisualizacao = function() {
-            const body = document.body;
-            const btn = document.getElementById('btn-modo-visual');
-            if (body.classList.contains('modo-pc')) {
-                body.classList.remove('modo-pc');
-                btn.innerText = "Modo: Mobile";
-                localStorage.setItem('subject_modo_tela', 'mobile');
-            } else {
-                body.classList.add('modo-pc');
-                btn.innerText = "Modo: PC";
-                localStorage.setItem('subject_modo_tela', 'pc');
-            }
-        }
-
-        if (localStorage.getItem('subject_modo_tela') === 'pc') {
-            document.body.classList.add('modo-pc');
-            document.getElementById('btn-modo-visual').innerText = "Modo: PC";
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const activeEl = document.activeElement;
-                if (activeEl && (activeEl.id === 'busca-prod' || activeEl.id === 'qtd-prod')) {
-                    e.preventDefault();
-                    adicionarCarrinho();
-                } else if (activeEl && activeEl.id === 'input-senha-adm') {
-                    e.preventDefault();
-                    validarSenhaAdm();
-                } else if (activeEl && activeEl.id === 'input-nome-inicial') {
-                    e.preventDefault();
-                    registrarNovoUsuario();
-                }
-            }
-        });
-
-        async function inicializarSistema() {
-            const userRef = ref(db, `usuarios/${deviceId}`);
-            try {
-                const snapshot = await get(userRef);
-                
-                // Oculta a tela de loading inicial
-                document.getElementById('tela-loading').classList.add('hidden');
-
-                if (snapshot.exists()) {
-                    dadosUsuarioAtual = snapshot.val();
-                    if (dadosUsuarioAtual.banido) {
-                        mostrarTelaBanido();
-                    } else {
-                        document.getElementById('app-header').classList.remove('hidden');
-                        document.getElementById('conteudo-caixa').classList.remove('hidden');
-                        document.getElementById('conteudo-caixa').classList.add('flex');
-                        document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosUsuarioAtual.nome}`;
-                        aplicarPermissoesUI();
-                    }
-                } else {
-                    document.getElementById('modal-usuario').classList.remove('hidden');
-                }
-
-                onValue(userRef, (snapshotUpdate) => {
-                    if (snapshotUpdate.exists()) {
-                        const dadosAtualizados = snapshotUpdate.val();
-                        dadosUsuarioAtual = dadosAtualizados;
-                        if (dadosAtualizados.banido) {
-                            mostrarTelaBanido();
-                        } else {
-                            const modal = document.getElementById('modal-usuario');
-                            if (!modal.classList.contains('hidden') && document.getElementById('container-mensagem-banido').classList.contains('hidden') == false) {
-                                modal.classList.add('hidden');
-                            }
-                        }
-                        document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosAtualizados.nome}`;
-                        aplicarPermissoesUI();
-                    }
-                });
-            } catch (error) {
-                console.error("Erro ao conectar:", error);
-                document.getElementById('tela-loading').classList.add('hidden');
-                mostrarAlerta("Erro", "Falha ao conectar com o banco de dados.");
-            }
-        }
-
-        function mostrarTelaBanido() {
-            document.getElementById('modal-titulo').innerText = "Acesso Bloqueado";
-            document.getElementById('modal-subtitulo').innerText = "Dispositivo Banido pelo Administrador.";
-            document.getElementById('container-input-nome').classList.add('hidden');
-            document.getElementById('container-mensagem-banido').classList.remove('hidden');
-            document.getElementById('modal-usuario').classList.remove('hidden');
-        }
-
-        inicializarSistema();
-
-        window.registrarNovoUsuario = async function() {
-            const nome = document.getElementById('input-nome-inicial').value.trim();
-            if (!nome) {
-                mostrarAlerta("Atenção", "Por favor, digite seu nome.");
-                return;
-            }
-
-            dadosUsuarioAtual = {
-                nome: nome,
-                banido: false,
-                podeEditarEstoque: false,
-                podeUsarCaixa: false,
-                podeAcessarAdm: false,
-                criadoEm: new Date().toLocaleString('pt-BR')
-            };
-
-            await set(ref(db, `usuarios/${deviceId}`), dadosUsuarioAtual);
-            document.getElementById('modal-usuario').classList.add('hidden');
-            document.getElementById('app-header').classList.remove('hidden');
-            document.getElementById('conteudo-caixa').classList.remove('hidden');
-            document.getElementById('conteudo-caixa').classList.add('flex');
-            document.getElementById('exibir-usuario-logado').innerText = `Usuário: ${dadosUsuarioAtual.nome}`;
-            aplicarPermissoesUI();
-        }
-
-        function aplicarPermissoesUI() {
-            if (!dadosUsuarioAtual) return;
-
-            // Controle da aba Adm: só aparece se tiver permissão
-            const containerAbas = document.getElementById('container-abas-nav');
-            let htmlAbas = `
-                <button onclick="mudarAba('caixa')" id="tab-caixa" class="flex-1 py-3 text-center bg-gray-900 border-b-4 border-white text-white font-bold">Separação</button>
-                <button onclick="mudarAba('estoque')" id="tab-estoque" class="flex-1 py-3 text-center text-gray-400 hover:text-white">Estoque</button>
-                <button onclick="mudarAba('vendas')" id="tab-vendas" class="flex-1 py-3 text-center text-gray-400 hover:text-white">Saída</button>
-            `;
-
-            if (dadosUsuarioAtual.podeAcessarAdm === true) {
-                htmlAbas += `<button onclick="tentarAbrirAdm()" id="tab-adm" class="flex-1 py-3 text-center text-gray-400 hover:text-white">Adm</button>`;
-            }
-            containerAbas.innerHTML = htmlAbas;
-
-            if (!dadosUsuarioAtual.podeUsarCaixa) {
-                document.getElementById('aviso-permissao-caixa').classList.remove('hidden');
-                document.getElementById('painel-conteudo-caixa').classList.add('hidden');
-            } else {
-                document.getElementById('aviso-permissao-caixa').classList.add('hidden');
-                document.getElementById('painel-conteudo-caixa').classList.remove('hidden');
-            }
-
-            if (!dadosUsuarioAtual.podeEditarEstoque) {
-                document.getElementById('aviso-permissao-estoque').classList.remove('hidden');
-                document.getElementById('bloco-cadastro-produto').classList.add('hidden');
-            } else {
-                document.getElementById('aviso-permissao-estoque').classList.add('hidden');
-                document.getElementById('bloco-cadastro-produto').classList.remove('hidden');
-            }
-            carregarEstoqueTela();
-        }
-
-        window.mudarAba = function(aba) {
-            ['caixa', 'estoque', 'vendas', 'adm'].forEach(a => {
-                const cont = document.getElementById(`conteudo-${a}`);
-                const tab = document.getElementById(`tab-${a}`);
-                if(cont) {
-                    cont.classList.add('hidden');
-                    cont.classList.remove('flex');
-                }
-                if(tab) tab.className = "flex-1 py-3 text-center text-gray-400 hover:text-white";
-            });
-
-            const alvoCont = document.getElementById(`conteudo-${aba}`);
-            const alvoTab = document.getElementById(`tab-${aba}`);
-            if(alvoCont) {
-                alvoCont.classList.remove('hidden');
-                alvoCont.classList.add('flex');
-            }
-            if(alvoTab) alvoTab.className = "flex-1 py-3 text-center bg-gray-900 border-b-4 border-white text-white font-bold";
-
-            if(aba === 'estoque') carregarEstoqueTela();
-            if(aba === 'vendas') carregarVendasTela();
-            if(aba === 'adm') carregarUsuariosAdm();
-        }
-
-        window.tentarAbrirAdm = function() {
-            if (dadosUsuarioAtual && dadosUsuarioAtual.podeAcessarAdm !== true) {
-                mostrarAlerta("Acesso Restrito", "Você não tem permissão de acesso à aba de Administração.");
-                return;
-            }
-            document.getElementById('modal-senha-adm').classList.remove('hidden');
-            document.getElementById('input-senha-adm').value = '';
-        }
-
-        window.fecharModalAdm = function() {
-            document.getElementById('modal-senha-adm').classList.add('hidden');
-        }
-
-        window.validarSenhaAdm = function() {
-            const senha = document.getElementById('input-senha-adm').value;
-            if (senha === SENHA_ADM_MESTRE) {
-                fecharModalAdm();
-                mudarAba('adm');
-            } else {
-                mostrarAlerta("Erro", "Senha de Administrador incorreta!");
-            }
-        }
-
-        window.carregarUsuariosAdm = async function() {
-            const container = document.getElementById('lista-usuarios-adm');
-            try {
-                const snapshot = await get(ref(db, 'usuarios'));
-                if (!snapshot.exists()) {
-                    container.innerHTML = `<p class="text-gray-400 text-center py-4">Nenhum usuário cadastrado.</p>`;
+            onValue(ref(db, 'pedidos'), (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    container.innerHTML = `<div class="col-span-full text-center text-gray-400 py-16 bg-white rounded-2xl border border-dashed"><i data-lucide="package-open" class="w-12 h-12 mx-auto mb-2 opacity-50"></i><p>Nenhum pedido no momento</p></div>`;
+                    lucide.createIcons();
                     return;
                 }
 
-                const usuarios = snapshot.val();
                 container.innerHTML = '';
-
-                Object.keys(usuarios).forEach(id => {
-                    const u = usuarios[id];
-                    const div = document.createElement('div');
-                    div.className = "bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2 flex flex-col gap-2";
-                    
-                    const podeAdm = u.podeAcessarAdm === true;
-
-                    div.innerHTML = `
-                        <div class="flex justify-between items-center font-bold text-gray-800">
-                            <span>👤 ${u.nome}</span>
-                            <span class="${u.banido ? 'text-red-600' : 'text-green-600'}">${u.banido ? 'BANIDO' : 'Ativo'}</span>
-                        </div>
-                        <p class="text-[11px] text-gray-500 truncate">ID: ${id}</p>
-                        <div class="grid grid-cols-3 gap-2 mt-1">
-                            <label class="flex items-center gap-1.5 text-gray-700 cursor-pointer">
-                                <input type="checkbox" ${u.podeEditarEstoque ? 'checked' : ''} onchange="atualizarPermissao('${id}', 'podeEditarEstoque', this.checked)"> Estoque
-                            </label>
-                            <label class="flex items-center gap-1.5 text-gray-700 cursor-pointer">
-                                <input type="checkbox" ${u.podeUsarCaixa ? 'checked' : ''} onchange="atualizarPermissao('${id}', 'podeUsarCaixa', this.checked)"> Separação
-                            </label>
-                            <label class="flex items-center gap-1.5 text-gray-700 cursor-pointer">
-                                <input type="checkbox" ${podeAdm ? 'checked' : ''} onchange="atualizarPermissao('${id}', 'podeAcessarAdm', this.checked)"> Acesso Adm
-                            </label>
-                        </div>
-                        <div class="flex justify-end mt-2">
-                            <button onclick="confirmarAlternarBanimento('${id}', ${!u.banido}, '${u.nome}')" class="${u.banido ? 'bg-green-600 text-white' : 'bg-red-600 text-white'} px-3 py-1 rounded text-xs font-bold">
-                                ${u.banido ? 'Desbanir Usuário' : 'Banir Usuário'}
-                            </button>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                });
-            } catch (error) {
-                console.error("Erro ao carregar usuários:", error);
-                container.innerHTML = `<p class="text-red-400 text-center py-4">Erro ao carregar lista.</p>`;
-            }
-        }
-
-        window.confirmarAlternarBanimento = function(idUser, statusBan, nomeUsuario) {
-            const acaoTexto = statusBan ? "banir" : "desbanir";
-            const mensagem = `Tem certeza que deseja ${acaoTexto} o usuário "${nomeUsuario}"?`;
-            
-            mostrarConfirmacao("Confirmação de Segurança", mensagem, async () => {
-                try {
-                    await update(ref(db, `usuarios/${idUser}`), { banido: statusBan });
-                    carregarUsuariosAdm();
-                } catch (error) {
-                    mostrarAlerta("Erro", "Não foi possível alterar o status de banimento.");
-                }
-            });
-        }
-
-        window.atualizarPermissao = async function(idUser, campo, valor) {
-            try {
-                await update(ref(db, `usuarios/${idUser}`), { [campo]: valor });
-                if (idUser === deviceId) {
-                    dadosUsuarioAtual[campo] = valor;
-                    aplicarPermissoesUI();
-                    if (campo === 'podeAcessarAdm' && !valor) {
-                        mudarAba('caixa');
-                    }
-                }
-            } catch (error) {
-                mostrarAlerta("Erro", "Erro ao atualizar permissão.");
-            }
-        }
-
-        async function carregarProdutos() {
-            try {
-                const snapshot = await get(ref(db, 'produtos'));
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    produtosCache = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-                } else {
-                    produtosCache = [];
-                }
-            } catch (error) {
-                console.error("Erro ao buscar produtos:", error);
-            }
-        }
-        carregarProdutos();
-
-        const inputBusca = document.getElementById('busca-prod');
-        const listaBusca = document.getElementById('lista-busca');
-
-        inputBusca.addEventListener('input', (e) => {
-            const termo = e.target.value.toLowerCase();
-            if (!termo) {
-                listaBusca.innerHTML = '';
-                return;
-            }
-            const encontrados = produtosCache.filter(p => p.nome.toLowerCase().includes(termo));
-            if (encontrados.length === 0) {
-                listaBusca.innerHTML = `<p class="text-sm text-gray-400 p-2 text-center">Nenhum produto</p>`;
-                return;
-            }
-
-            listaBusca.innerHTML = '';
-            encontrados.forEach(p => {
-                const div = document.createElement('div');
-                div.className = "py-2.5 px-2 flex justify-between items-center text-sm cursor-pointer hover:bg-gray-100";
-                div.innerHTML = `<span>${p.nome} (Est: ${p.estoque})</span> <strong class="text-black">R$ ${p.preco.toFixed(2)}</strong>`;
-                div.onclick = () => {
-                    produtoSelecionadoTemp = p;
-                    document.getElementById('nome-prod-selecionado').innerText = `${p.nome} - R$ ${p.preco.toFixed(2)}`;
-                    document.getElementById('painel-selecionado').classList.remove('hidden');
-                    inputBusca.value = p.nome;
-                    listaBusca.innerHTML = '';
-                };
-                listaBusca.appendChild(div);
-            });
-        });
-
-        window.adicionarCarrinho = function() {
-            if (!produtoSelecionadoTemp) {
-                mostrarAlerta("Atenção", "Selecione um produto na pesquisa primeiro.");
-                return;
-            }
-            const qtdDesejada = parseInt(document.getElementById('qtd-prod').value);
-            if (isNaN(qtdDesejada) || qtdDesejada <= 0) {
-                mostrarAlerta("Atenção", "Informe uma quantidade válida.");
-                return;
-            }
-            if (qtdDesejada > produtoSelecionadoTemp.estoque) {
-                mostrarAlerta("Estoque Insuficiente", `Disponível: ${produtoSelecionadoTemp.estoque}`);
-                return;
-            }
-
-            const itemExistente = carrinho.find(i => i.id === produtoSelecionadoTemp.id);
-            if (itemExistente) {
-                if ((itemExistente.qtd + qtdDesejada) > produtoSelecionadoTemp.estoque) {
-                    mostrarAlerta("Atenção", "A quantidade total excede o estoque disponível.");
-                    return;
-                }
-                itemExistente.qtd += qtdDesejada;
-            } else {
-                carrinho.push({ ...produtoSelecionadoTemp, qtd: qtdDesejada });
-            }
-
-            produtoSelecionadoTemp = null;
-            document.getElementById('painel-selecionado').classList.add('hidden');
-            inputBusca.value = '';
-            document.getElementById('qtd-prod').value = 1;
-            atualizarCarrinhoUI();
-        }
-
-        function atualizarCarrinhoUI() {
-            const container = document.getElementById('itens-carrinho');
-            const totalEl = document.getElementById('total-carrinho');
-
-            if (carrinho.length === 0) {
-                container.innerHTML = `<p class="text-gray-400 text-center py-4 text-sm">Nenhum item adicionado</p>`;
-                totalEl.innerText = "R$ 0,00";
-                return;
-            }
-
-            container.innerHTML = '';
-            let total = 0;
-
-            carrinho.forEach((item, index) => {
-                const subtotal = item.preco * item.qtd;
-                total += subtotal;
-
-                const div = document.createElement('div');
-                div.className = "py-2.5 flex justify-between items-center text-base";
-                div.innerHTML = `
-                    <div>
-                        <p class="font-medium">${item.nome}</p>
-                        <p class="text-xs text-gray-500">${item.qtd}x R$ ${item.preco.toFixed(2)}</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="font-bold">R$ ${subtotal.toFixed(2)}</span>
-                        <button onclick="removerItem(${index})" class="text-red-600 text-sm font-bold px-2 py-1">X</button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-
-            totalEl.innerText = `R$ ${total.toFixed(2)}`;
-        }
-
-        window.removerItem = function(index) {
-            carrinho.splice(index, 1);
-            atualizarCarrinhoUI();
-        }
-
-        window.limparCarrinho = function() {
-            carrinho = [];
-            atualizarCarrinhoUI();
-        }
-
-        window.confirmarVenda = function() {
-            if (carrinho.length === 0) {
-                mostrarAlerta("Atenção", "O carrinho está vazio.");
-                return;
-            }
-
-            let valorTotalVenda = carrinho.reduce((acc, item) => acc + (item.preco * item.qtd), 0);
-            
-            mostrarConfirmacao("Confirmar Separação", `Deseja confirmar a separação feita por ${dadosUsuarioAtual.nome} no valor total de R$ ${valorTotalVenda.toFixed(2)}?`, async () => {
-                const dataHora = new Date().toLocaleString('pt-BR');
-
-                try {
-                    const updates = {};
-                    for (const item of carrinho) {
-                        const produtoOriginal = produtosCache.find(p => p.id === item.id);
-                        const novoEstoque = produtoOriginal.estoque - item.qtd;
-                        if (novoEstoque < 0) {
-                            mostrarAlerta("Erro", `Estoque insuficiente para ${item.nome}`);
-                            return;
-                        }
-                        updates[`produtos/${item.id}/estoque`] = novoEstoque;
-                    }
-
-                    const novaVendaRef = push(ref(db, 'vendas'));
-                    updates[`vendas/${novaVendaRef.key}`] = {
-                        dataHora: dataHora,
-                        separador: dadosUsuarioAtual.nome,
-                        total: valorTotalVenda,
-                        itens: carrinho.map(i => ({ nome: i.nome, qtd: i.qtd, precoUnitario: i.preco }))
-                    };
-
-                    await update(ref(db), updates);
-                    mostrarAlerta("Sucesso", "Separação confirmada e estoque atualizado com sucesso!");
-                    carrinho = [];
-                    atualizarCarrinhoUI();
-                    await carregarProdutos();
-                    carregarEstoqueTela();
-                } catch (error) {
-                    console.error("Erro ao processar:", error);
-                    mostrarAlerta("Erro", "Erro ao conectar com o banco de dados.");
-                }
-            });
-        }
-
-        window.salvarProduto = async function() {
-            if (!dadosUsuarioAtual || !dadosUsuarioAtual.podeEditarEstoque) {
-                mostrarAlerta("Acesso Negado", "Você não tem permissão para editar o estoque.");
-                return;
-            }
-
-            const idEdit = document.getElementById('edit-id-prod').value;
-            const nome = document.getElementById('novo-nome').value.trim();
-            const preco = parseFloat(document.getElementById('novo-preco').value);
-            const estoque = parseInt(document.getElementById('novo-estoque').value);
-
-            if (!nome || isNaN(preco) || isNaN(estoque)) {
-                mostrarAlerta("Atenção", "Preencha todos os campos.");
-                return;
-            }
-
-            try {
-                if (idEdit) {
-                    await update(ref(db, `produtos/${idEdit}`), { nome, preco, estoque });
-                    mostrarAlerta("Sucesso", "Produto atualizado com sucesso!");
-                    cancelarEdicao();
-                } else {
-                    await push(ref(db, 'produtos'), { nome, preco, estoque });
-                    mostrarAlerta("Sucesso", "Produto cadastrado com sucesso!");
-                    document.getElementById('novo-nome').value = '';
-                    document.getElementById('novo-preco').value = '';
-                    document.getElementById('novo-estoque').value = '';
-                }
-                await carregarEstoqueTela();
-            } catch (error) {
-                mostrarAlerta("Erro", "Erro ao salvar no Firebase.");
-            }
-        }
-
-        window.prepararEdicao = function(id, nome, preco, estoque) {
-            document.getElementById('edit-id-prod').value = id;
-            document.getElementById('novo-nome').value = nome;
-            document.getElementById('novo-preco').value = preco;
-            document.getElementById('novo-estoque').value = estoque;
-            document.getElementById('titulo-form-produto').innerText = "Editar Produto";
-            document.getElementById('btn-salvar-prod').innerText = "Atualizar Produto";
-            document.getElementById('btn-cancelar-edit').classList.remove('hidden');
-        }
-
-        window.cancelarEdicao = function() {
-            document.getElementById('edit-id-prod').value = '';
-            document.getElementById('novo-nome').value = '';
-            document.getElementById('novo-preco').value = '';
-            document.getElementById('novo-estoque').value = '';
-            document.getElementById('titulo-form-produto').innerText = "Cadastrar Produto";
-            document.getElementById('btn-salvar-prod').innerText = "Salvar no Firebase";
-            document.getElementById('btn-cancelar-edit').classList.add('hidden');
-        }
-
-        window.excluirProduto = function(id, nome) {
-            if (!dadosUsuarioAtual || !dadosUsuarioAtual.podeEditarEstoque) {
-                mostrarAlerta("Acesso Negado", "Apenas usuários com permissão podem excluir itens.");
-                return;
-            }
-
-            mostrarConfirmacao("Excluir Produto", `Tem certeza que deseja EXCLUIR permanentemente o produto "${nome}"?`, async () => {
-                try {
-                    await remove(ref(db, `produtos/${id}`));
-                    mostrarAlerta("Sucesso", "Produto excluído!");
-                    await carregarEstoqueTela();
-                } catch (error) {
-                    mostrarAlerta("Erro", "Erro ao excluir.");
-                }
-            });
-        }
-
-        async function carregarEstoqueTela(filtro = '') {
-            await carregarProdutos();
-            const lista = document.getElementById('lista-estoque');
-            const alertaBox = document.getElementById('alerta-estoque-zero');
-            const textoAlerta = document.getElementById('texto-alerta-zero');
-
-            if (produtosCache.length === 0) {
-                lista.innerHTML = `<p class="text-gray-400 text-center py-4">Nenhum produto</p>`;
-                alertaBox.classList.add('hidden');
-                return;
-            }
-
-            const zerados = produtosCache.filter(p => p.estoque === 0);
-            if (zerados.length > 0) {
-                textoAlerta.innerText = `Produtos esgotados: ${zerados.map(p => p.nome).join(', ')}`;
-                alertaBox.classList.remove('hidden');
-            } else {
-                alertaBox.classList.add('hidden');
-            }
-
-            const filtrados = produtosCache.filter(p => p.nome.toLowerCase().includes(filtro.toLowerCase()));
-            lista.innerHTML = '';
-            
-            filtrados.forEach(p => {
-                const div = document.createElement('div');
-                div.className = `py-3 px-3 rounded-lg flex justify-between items-center border-b border-gray-100 ${p.estoque === 0 ? 'bg-red-50 border-red-200' : ''}`;
                 
-                let botoesAcao = '';
-                if (dadosUsuarioAtual && dadosUsuarioAtual.podeEditarEstoque) {
-                    botoesAcao = `
-                        <div class="flex gap-1.5">
-                            <button onclick="prepararEdicao('${p.id}', '${p.nome}', ${p.preco}, ${p.estoque})" class="bg-gray-800 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold">Editar</button>
-                            <button onclick="excluirProduto('${p.id}', '${p.nome}')" class="bg-black text-white px-2.5 py-1.5 rounded-lg text-xs font-bold">Excluir</button>
+                // Converte o objeto do Firebase em array e ordena do mais recente para o mais antigo
+                const pedidosArray = Object.keys(data).map(id => ({
+                    id,
+                    ...data[id]
+                })).sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+
+                pedidosArray.forEach(pedido => {
+                    let corStatus = 'bg-orange-100 text-orange-700';
+                    if (pedido.status === 'Preparando') corStatus = 'bg-yellow-100 text-yellow-700';
+                    if (pedido.status === 'A caminho') corStatus = 'bg-blue-100 text-blue-700';
+                    if (pedido.status === 'Entregue') corStatus = 'bg-green-100 text-green-700';
+
+                    let botoesAcao = '';
+                    if (pedido.status === 'Aguardando confirmação da loja') {
+                        botoesAcao = `<button onclick="mudarStatus('${pedido.id}', 'Preparando')" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white text-xs py-2 rounded-xl font-bold transition flex items-center justify-center gap-1 shadow-md"><i data-lucide="chef-hat" class="w-4 h-4"></i> Aceitar e Preparar</button>`;
+                    } else if (pedido.status === 'Preparando') {
+                        botoesAcao = `<button onclick="mudarStatus('${pedido.id}', 'A caminho')" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs py-2 rounded-xl font-bold transition flex items-center justify-center gap-1 shadow-md"><i data-lucide="bike" class="w-4 h-4"></i> Enviar para Entrega</button>`;
+                    } else if (pedido.status === 'A caminho') {
+                        botoesAcao = `<button onclick="mudarStatus('${pedido.id}', 'Entregue')" class="w-full bg-green-600 hover:bg-green-700 text-white text-xs py-2 rounded-xl font-bold transition flex items-center justify-center gap-1 shadow-md"><i data-lucide="check-circle" class="w-4 h-4"></i> Concluir Entrega</button>`;
+                    } else {
+                        botoesAcao = `<span class="block text-center text-xs text-green-600 font-bold py-1">Pedido Finalizado</span>`;
+                    }
+
+                    container.innerHTML += `
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-mono font-bold text-gray-500">Cód: ${pedido.id.slice(-6)}</span>
+                                <span class="text-xs px-2.5 py-1 rounded-full font-bold ${corStatus}">${pedido.status}</span>
+                            </div>
+                            
+                            <div class="border-t border-b py-2 space-y-1 text-xs">
+                                ${pedido.itens.map(i => `<div class="flex justify-between"><span>${i.qtd}x ${i.nome}</span><span>R$ ${(i.preco * i.qtd).toFixed(2)}</span></div>`).join('')}
+                            </div>
+
+                            <div class="text-xs bg-gray-50 p-2 rounded-xl space-y-1">
+                                <p><strong>Forma:</strong> ${pedido.formaPagamento || 'Não informada'}</p>
+                                <p><strong>Meio:</strong> ${pedido.meioPagamento || 'Não informado'}</p>
+                            </div>
+
+                            <div class="flex justify-between items-center text-sm font-bold pt-1">
+                                <span>Total: R$ ${pedido.total.toFixed(2)}</span>
+                            </div>
+
+                            <div>
+                                ${botoesAcao}
+                            </div>
                         </div>
                     `;
-                }
-
-                div.innerHTML = `
-                    <div>
-                        <span class="font-medium text-base text-gray-900">${p.nome}</span><br>
-                        <span class="text-xs text-gray-500">Estoque: <strong class="${p.estoque === 0 ? 'text-black font-extrabold underline' : ''}">${p.estoque}</strong> | R$ ${p.preco.toFixed(2)}</span>
-                    </div>
-                    ${botoesAcao}
-                `;
-                lista.appendChild(div);
+                });
+                lucide.createIcons();
             });
         }
 
-        document.getElementById('busca-estoque').addEventListener('input', (e) => {
-            carregarEstoqueTela(e.target.value);
-        });
-
-        async function carregarVendasTela(filtroData = '') {
-            const listaVendas = document.getElementById('lista-vendas');
+        window.mudarStatus = async function(id, novoStatus) {
             try {
-                if (vendasCache.length === 0) {
-                    const snapshot = await get(ref(db, 'vendas'));
-                    if (!snapshot.exists()) {
-                        listaVendas.innerHTML = `<p class="text-gray-400 text-center py-6">Nenhuma saída registrada ainda.</p>`;
-                        return;
-                    }
-                    vendasCache = Object.values(snapshot.val()).reverse();
-                }
-
-                const filtradas = vendasCache.filter(v => v.dataHora.toLowerCase().includes(filtroData.toLowerCase()));
-                if (filtradas.length === 0) {
-                    listaVendas.innerHTML = `<p class="text-gray-400 text-center py-6">Nenhuma saída encontrada.</p>`;
-                    return;
-                }
-
-                listaVendas.innerHTML = '';
-                filtradas.forEach(venda => {
-                    const div = document.createElement('div');
-                    div.className = "bg-gray-50 p-3 rounded-xl border border-gray-300 shadow-sm mb-3";
-                    let itensHtml = venda.itens.map(i => `<li>${i.qtd}x ${i.nome} (R$ ${i.precoUnitario.toFixed(2)})</li>`).join('');
-
-                    div.innerHTML = `
-                        <div class="flex justify-between font-bold text-gray-900 border-b border-gray-200 pb-2 mb-2 text-sm">
-                            <span>📅 ${venda.dataHora}</span>
-                            <span class="text-black text-base">R$ ${venda.total.toFixed(2)}</span>
-                        </div>
-                        <p class="text-gray-600 mb-2 text-sm">👤 Separador: <strong>${venda.separador || 'Não informado'}</strong></p>
-                        <p class="text-gray-800 font-semibold mb-1 text-sm">Produtos:</p>
-                        <ul class="list-disc list-inside text-gray-600 pl-1 space-y-0.5 text-sm">${itensHtml}</ul>
-                    `;
-                    listaVendas.appendChild(div);
-                });
+                await update(ref(db, `pedidos/${id}`), { status: novoStatus });
             } catch (error) {
-                listaVendas.innerHTML = `<p class="text-gray-500 text-center py-6">Erro ao carregar histórico.</p>`;
+                console.error("Erro ao atualizar status:", error);
+                alert("Erro ao alterar o status do pedido.");
             }
         }
 
-        document.getElementById('busca-vendas').addEventListener('input', (e) => {
-            carregarVendasTela(e.target.value);
-        });
+        carregarPedidosLoja();
     </script>
 </body>
 </html>
